@@ -20,6 +20,7 @@ import { ZodError } from "zod";
  * These allow you to access things when processing a request, like the database, the session, etc.
  */
 
+import { db } from "~/server/db";
 type CreateContextOptions = Record<string, never>;
 
 /**
@@ -33,7 +34,7 @@ type CreateContextOptions = Record<string, never>;
  * @see https://create.t3.gg/en/usage/trpc#-serverapitrpcts
  */
 const createInnerTRPCContext = (_opts: CreateContextOptions) => {
-  return {};
+  return {  db };
 };
 
 /**

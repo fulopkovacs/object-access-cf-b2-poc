@@ -40,3 +40,10 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# local sqlite file used for development
+db.sqlite
+
+# database connections for vim-dadbod-ui
+# NOTE: this is a custom setup!
+.dbs.lua

@@ -1,4 +1,6 @@
+import { sql } from "drizzle-orm";
 import { z } from "zod";
+import { apiInsertClickData, clicksPerPage } from "~/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 export const exampleRouter = createTRPCRouter({
@@ -8,5 +10,25 @@ export const exampleRouter = createTRPCRouter({
       return {
         greeting: `Hello ${input.text}`,
       };
+    }),
+  getAllClicks: publicProcedure.query(async ({ ctx }) => {
+    const allClicks = await ctx.db.select().from(clicksPerPage).all();
+    return allClicks;
+  }),
+  insertClick: publicProcedure
+    .input(apiInsertClickData)
+    .mutation(async ({ ctx, input }) => {
+      const [res] = await ctx.db
+        .insert(clicksPerPage)
+        .values({ ...input, numberOfClicks: 1 })
+        // .onConflictDoNothing()
+        .onConflictDoUpdate({
+          target: clicksPerPage.pathname,
+          set: { numberOfClicks: sql`${clicksPerPage.numberOfClicks} + 1` },
+        })
+        .returning({ insertedId: clicksPerPage.id })
+        .all();
+
+      return { insertedId: res?.insertedId };
     }),
 });

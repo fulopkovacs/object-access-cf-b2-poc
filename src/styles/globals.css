@@ -8,4 +8,8 @@
     @apply bg-gray1;
     @apply text-gray12;
   }
+
+  ul {
+    @apply list-inside list-disc;
+  }
 }

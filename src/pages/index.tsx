@@ -1,8 +1,8 @@
 import Head from "next/head";
-import { api } from "~/utils/api";
+import Link from "next/link";
+import { ClicksCounter } from "~/components/ClicksCounter";
 
 export default function Home() {
-  const hello = api.example.hello.useQuery({ text: "from tRPC" });
 
   return (
     <>
@@ -11,7 +11,10 @@ export default function Home() {
         <meta name="description" content="Virtual sketchbook" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="">hello</main>
+      <main className="">
+        <Link href="/test">test page</Link>
+        <ClicksCounter/>
+      </main>
     </>
   );
 }

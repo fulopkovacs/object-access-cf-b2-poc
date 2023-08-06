@@ -1,28 +1,57 @@
-# Create T3 App
+# Virtual Sketchbook
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+Easy image organisation + sharing for artists.
 
-## What's next? How do I make an app with this?
+## Setup
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+Install the dependencies:
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+```bash
+pnpm i
+```
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+Copy `.env.example` to `.env`:
 
-## Learn More
+```bash
+cp .env.example .env
+```
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+Push the schema the db:
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+```bash
+pnpm db.local.push
+```
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+Seed the database:
 
-## How do I deploy this?
+```bash
+pnpm db.local.seed
+```
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+## Usage
+
+Start the development server:
+
+```bash
+pnpm dev
+```
+
+Connect to the local db (requires [`usql`](https://github.com/xo/usql)):
+
+```bash
+pnpm db.local
+```
+
+### DB
+
+Generate the db migrations:
+
+```bash
+pnpm db.local.generate
+```
+
+Run db migrations:
+
+```bash
+pnpm db.local.migrate
+```
