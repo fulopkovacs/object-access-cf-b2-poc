@@ -5,8 +5,10 @@
 @layer base {
   html,
   body {
-    @apply bg-gray1;
-    @apply text-gray12;
+    /* @apply bg-gray1; */
+    @apply bg-background;
+    /* background: #000 !important; */
+    /* @apply text-gray12; */
   }
 
   ul {

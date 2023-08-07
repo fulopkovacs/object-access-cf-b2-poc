@@ -1,6 +1,7 @@
-import {type ChangeEvent, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, useMemo, useRef, useState } from "react";
 import UserPageLayout from "~/components/UserPageLayout";
 import Image from "next/image";
+import { Input, Button, Checkbox } from "@nextui-org/react";
 
 export default function UploadImagePage() {
   const [profilePhoto, setProfilePhoto] = useState<Blob | undefined | string>();
@@ -31,12 +32,14 @@ export default function UploadImagePage() {
         width={200}
         alt=""
       />
-      <input
+      <Input
         onChange={handleImageFile}
         ref={filePickerInput}
         type="file"
         accept="image/*"
       />
+      <Button color="primary">Say hi</Button>
+      <Checkbox defaultSelected>Option</Checkbox>
     </UserPageLayout>
   );
 }

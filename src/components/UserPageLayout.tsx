@@ -5,7 +5,7 @@ export default function UserPageLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <Navbar />
-      <main>{children}</main>
+      {children}
     </>
   );
 }
