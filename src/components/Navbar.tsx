@@ -51,7 +51,7 @@ export function Navbar() {
   const router = useRouter();
 
   return (
-    <NextUINavbar position={"static"}>
+    <NextUINavbar>
       <NavbarContent justify="end">
         <NavbarItem>Path</NavbarItem>
         <NavbarItem>
