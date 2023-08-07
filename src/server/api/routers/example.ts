@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { apiInsertClickData, clicksPerPage } from "~/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { uploadFile } from "~/utils/lib/s3";
 
 export const exampleRouter = createTRPCRouter({
   hello: publicProcedure
@@ -31,4 +32,12 @@ export const exampleRouter = createTRPCRouter({
 
       return { insertedId: res?.insertedId };
     }),
+  uploadTestFile: publicProcedure.mutation(async ({ ctx }) => {
+    await uploadFile({
+      key: Date.now().toString(),
+      content: Date.now().toString(),
+    });
+
+    return { message: "success" };
+  }),
 });

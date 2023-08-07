@@ -14,6 +14,7 @@
     "db.local.migrate": "NODE_ENV=development dotenv -e .env --  tsx ./src/db/migrate.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.32.0",
     "@libsql/client": "^0.3.1",
     "@nextui-org/react": "^2.0.5",
     "@radix-ui/colors": "^1.0.1",

@@ -9,6 +9,11 @@ export const env = createEnv({
   server: {
     NODE_ENV: z.enum(["development", "test", "production"]),
     DATABASE_URL: z.string().min(1),
+    BUCKET_ENDPOINT: z.string().min(1),
+    BUCKET_NAME: z.string().min(1),
+    BUCKET_REGION: z.string().min(1),
+    aws_access_key_id: z.string().min(1),
+    aws_secret_access_key: z.string().min(1),
   },
 
   /**
@@ -27,6 +32,11 @@ export const env = createEnv({
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
     DATABASE_URL: process.env.DATABASE_URL,
+    BUCKET_ENDPOINT: process.env.BUCKET_ENDPOINT,
+    BUCKET_NAME: process.env.BUCKET_NAME,
+    BUCKET_REGION: process.env.BUCKET_REGION,
+    aws_access_key_id: process.env.aws_access_key_id,
+    aws_secret_access_key: process.env.aws_secret_access_key,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**
