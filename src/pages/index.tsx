@@ -1,6 +1,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import { ClicksCounter } from "~/components/ClicksCounter";
+import UserPageLayout from "~/components/UserPageLayout";
 
 export default function Home() {
 
@@ -11,10 +12,9 @@ export default function Home() {
         <meta name="description" content="Virtual sketchbook" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="">
-        <Link href="/test">test page</Link>
+      <UserPageLayout>
         <ClicksCounter/>
-      </main>
+      </UserPageLayout>
     </>
   );
 }

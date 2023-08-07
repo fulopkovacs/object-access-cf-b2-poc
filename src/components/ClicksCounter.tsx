@@ -1,4 +1,5 @@
 import { api } from "~/utils/api";
+import { Button } from "@nextui-org/react";
 
 export function ClicksCounter() {
   const utils = api.useContext();
@@ -10,14 +11,14 @@ export function ClicksCounter() {
   });
   return (
     <div>
-      <button
-        className="rounded-md bg-yellow9 px-4 py-2 font-semibold tracking-tight text-gray1 hover:bg-yellow10"
+      <Button
+        color={"primary"}
         onClick={() =>
           updateTheClicksData.mutate({ pathname: window.location.pathname })
         }
       >
         Increase the number of clicks by 1
-      </button>
+      </Button>
       <ul className="list-inside list-disc">
         {allClicks.data?.map((c) => (
           <li key={c.id}>
