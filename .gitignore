@@ -41,6 +41,24 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
+# Terraform-related files
+# source:
+# https://github.com/hashicorp/terraform-guides/blob/d237805ce8d0aa15a82b9538500fb118e1f2edb3/.gitignore#L1
+
+# Compiled files
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info
+
+# Ignored Terraform files
+*gitignore*.tf
+
+# Directories
+.terraform/
+
+# private vars for terraform
+private.auto.tfvars.json
+
 # local sqlite file used for development
 db.sqlite
 

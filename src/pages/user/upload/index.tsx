@@ -3,6 +3,7 @@ import UserPageLayout from "~/components/UserPageLayout";
 import { Button, Checkbox } from "@nextui-org/react";
 import { RefreshCwIcon, UploadIcon } from "lucide-react";
 import { motion } from "framer-motion";
+import { api } from "~/utils/api";
 
 export default function UploadImagePage() {
   const [image, setProfilePhoto] = useState<Blob | undefined | string>();
@@ -13,6 +14,8 @@ export default function UploadImagePage() {
   );
 
   const filePickerInput = useRef<HTMLInputElement>(null);
+
+  const uploadTestFile = api.example.uploadTestFile.useMutation();
 
   function handleImageFile(event: ChangeEvent<HTMLInputElement>) {
     if (event.target.files) {
@@ -71,8 +74,13 @@ export default function UploadImagePage() {
         type="file"
         accept="image/*"
       />
-      <Button color="primary">Say hi</Button>
-      <Checkbox defaultSelected>Option</Checkbox>
+      <div className="flex w-full flex-col items-center">
+        <Button color="primary" onClick={() => uploadTestFile.mutate()}>
+          Upload test file
+        </Button>
+        <p>{uploadTestFile.data?.message}</p>
+        <p className="text-red-400">{uploadTestFile.error?.message}</p>
+      </div>
     </UserPageLayout>
   );
 }
