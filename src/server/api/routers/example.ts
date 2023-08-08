@@ -33,11 +33,11 @@ export const exampleRouter = createTRPCRouter({
       return { insertedId: res?.insertedId };
     }),
   uploadTestFile: publicProcedure.mutation(async ({ ctx }) => {
-    await uploadFile({
+    /* await uploadFile({
       key: Date.now().toString(),
       content: Date.now().toString(),
-    });
+    }); */
 
-    return { message: "success" };
+    return { message: "not doing it now" };
   }),
 });

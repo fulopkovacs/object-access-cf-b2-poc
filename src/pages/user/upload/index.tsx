@@ -1,17 +1,22 @@
-import { type ChangeEvent, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, useMemo, useRef, useState, ReactNode } from "react";
 import UserPageLayout from "~/components/UserPageLayout";
-import { Button, Checkbox } from "@nextui-org/react";
+import { Button } from "@nextui-org/react";
 import { RefreshCwIcon, UploadIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { api } from "~/utils/api";
 
-export default function UploadImagePage() {
-  const [image, setProfilePhoto] = useState<Blob | undefined | string>();
+export function FileNameLabel({ children }: { children: ReactNode }) {
+  return <p className="text-zinc-500">{children}</p>;
+}
 
-  const imageUrl = useMemo(
-    () => (image instanceof Blob ? URL.createObjectURL(image) : image),
-    [image]
-  );
+export default function UploadImagePage() {
+  const [image, setImage] = useState<Blob | undefined | string>();
+
+  const { imageUrl, imageName } = useMemo(() => {
+    const imageUrl = image instanceof Blob ? URL.createObjectURL(image) : image;
+    const imageName = image instanceof Blob ? image.name : "image";
+    return { imageUrl, imageName };
+  }, [image]);
 
   const filePickerInput = useRef<HTMLInputElement>(null);
 
@@ -20,7 +25,7 @@ export default function UploadImagePage() {
   function handleImageFile(event: ChangeEvent<HTMLInputElement>) {
     if (event.target.files) {
       const [imageFile] = event.target.files;
-      setProfilePhoto(imageFile);
+      setImage(imageFile);
     }
   }
 
@@ -32,7 +37,7 @@ export default function UploadImagePage() {
       <div className="flex  w-full flex-col items-center justify-center gap-3 py-10">
         <motion.div
           key={imageUrl}
-          className="flex h-72 items-center justify-center"
+          className="flex h-96 flex-col items-center justify-center gap-2"
           layout
           layoutId={imageUrl}
           initial={{ opacity: 0 }}
@@ -49,6 +54,7 @@ export default function UploadImagePage() {
           ) : (
             <div className="h-72 w-48 rounded-lg bg-zinc-900"></div>
           )}
+          <FileNameLabel>{imageName}</FileNameLabel>
         </motion.div>
         <Button
           color={image ? "default" : "primary"}

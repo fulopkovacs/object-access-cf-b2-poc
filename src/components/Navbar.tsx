@@ -51,7 +51,7 @@ export function Navbar() {
   const router = useRouter();
 
   return (
-    <NextUINavbar>
+    <NextUINavbar maxWidth="full">
       <NavbarContent justify="end">
         <NavbarItem>Path</NavbarItem>
         <NavbarItem>
