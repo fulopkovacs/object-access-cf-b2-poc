@@ -4,18 +4,27 @@ import { Button } from "@nextui-org/react";
 import { RefreshCwIcon, UploadIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { api } from "~/utils/api";
+import prettyBytes from "pretty-bytes";
 
-export function FileNameLabel({ children }: { children: ReactNode }) {
-  return <p className="text-zinc-500">{children}</p>;
+export function FileDataLabel({ children }: { children: ReactNode }) {
+  return <p className="text-sm text-zinc-500">{children}</p>;
 }
 
 export default function UploadImagePage() {
   const [image, setImage] = useState<Blob | undefined | string>();
 
-  const { imageUrl, imageName } = useMemo(() => {
-    const imageUrl = image instanceof Blob ? URL.createObjectURL(image) : image;
-    const imageName = image instanceof Blob ? image.name : "image";
-    return { imageUrl, imageName };
+  const { fileUrl, fileName, fileSize, fileType } = useMemo(() => {
+    if (image instanceof Blob) {
+      return {
+        fileUrl: URL.createObjectURL(image),
+        fileName: image.name,
+        fileSize: prettyBytes(image.size),
+        fileType: image.type,
+        image,
+      };
+    } else {
+      return { fileUrl: image };
+    }
   }, [image]);
 
   const filePickerInput = useRef<HTMLInputElement>(null);
@@ -36,25 +45,27 @@ export default function UploadImagePage() {
       </h1>
       <div className="flex  w-full flex-col items-center justify-center gap-3 py-10">
         <motion.div
-          key={imageUrl}
+          key={fileUrl}
           className="flex h-96 flex-col items-center justify-center gap-2"
           layout
-          layoutId={imageUrl}
+          layoutId={fileUrl}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          {imageUrl ? (
+          {fileUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               className="block aspect-auto max-h-72 max-w-full rounded-lg"
-              src={imageUrl}
+              src={fileUrl}
               alt=""
             />
           ) : (
             <div className="h-72 w-48 rounded-lg bg-zinc-900"></div>
           )}
-          <FileNameLabel>{imageName}</FileNameLabel>
+          <FileDataLabel>{fileName}</FileDataLabel>
+          <FileDataLabel>{fileSize}</FileDataLabel>
+          <FileDataLabel>{fileType}</FileDataLabel>
         </motion.div>
         <Button
           color={image ? "default" : "primary"}
