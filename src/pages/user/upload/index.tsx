@@ -7,6 +7,15 @@ import { api } from "~/utils/api";
 import prettyBytes from "pretty-bytes";
 
 export function FileDataLabel({ children }: { children: ReactNode }) {
+function ImagePlaceHolder() {
+  return (
+    <div className="flex h-72 w-48 items-center justify-center rounded-lg bg-zinc-900">
+      <ImageIcon className="h-6 w-6 text-zinc-700" />
+    </div>
+  );
+}
+
+function FileDataLabel({ children }: { children: ReactNode }) {
   return <p className="text-sm text-zinc-500">{children}</p>;
 }
 
@@ -61,7 +70,7 @@ export default function UploadImagePage() {
               alt=""
             />
           ) : (
-            <div className="h-72 w-48 rounded-lg bg-zinc-900"></div>
+            <ImagePlaceHolder />
           )}
           <FileDataLabel>{fileName}</FileDataLabel>
           <FileDataLabel>{fileSize}</FileDataLabel>
