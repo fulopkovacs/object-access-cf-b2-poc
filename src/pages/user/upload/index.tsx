@@ -1,12 +1,48 @@
-import { type ChangeEvent, useMemo, useRef, useState, ReactNode } from "react";
+import {
+  type ChangeEvent,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import UserPageLayout from "~/components/UserPageLayout";
 import { Button } from "@nextui-org/react";
-import { RefreshCwIcon, UploadIcon } from "lucide-react";
+import { ImageIcon, RefreshCwIcon, UploadIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { api } from "~/utils/api";
 import prettyBytes from "pretty-bytes";
 
-export function FileDataLabel({ children }: { children: ReactNode }) {
+async function uploadFileToBucket({
+  // fileName,
+  fileContent,
+  contentType,
+  url,
+}: {
+  url: string;
+  contentType: string;
+  fileContent: Blob;
+}) {
+  try {
+    // TODO: send `PUT` request
+    const res = await fetch(decodeURIComponent(url), {
+      method: "PUT",
+      body: "it works from the browser",
+      /* headers: {
+        "Content-Type": "text/plain",
+      }, */
+      // body: fileContent,
+      /* headers: {
+        "Content-Type": contentType,
+      }, */
+    });
+    console.log(res);
+    // return res;
+    return res;
+  } catch (e) {
+    // throw e;
+  }
+}
+
 function ImagePlaceHolder() {
   return (
     <div className="flex h-72 w-48 items-center justify-center rounded-lg bg-zinc-900">
@@ -20,6 +56,9 @@ function FileDataLabel({ children }: { children: ReactNode }) {
 }
 
 export default function UploadImagePage() {
+  const [uploadRes, setUploadRes] = useState<string | undefined>();
+  const [uploadError, setUploadError] = useState<Error | undefined>();
+
   const [image, setImage] = useState<Blob | undefined | string>();
 
   const { fileUrl, fileName, fileSize, fileType } = useMemo(() => {
@@ -38,7 +77,26 @@ export default function UploadImagePage() {
 
   const filePickerInput = useRef<HTMLInputElement>(null);
 
-  const uploadTestFile = api.example.uploadTestFile.useMutation();
+  const generatePreSignedUrl = api.example.generatePreSignedUrl.useMutation({
+    onError: (e) => {
+      console.error(e);
+    },
+    onSuccess: (data) => {
+      if (image instanceof Blob && fileType) {
+        void uploadFileToBucket({
+          url: data.preSignedUrl,
+          fileContent: image,
+          contentType: fileType,
+        })
+          .then(() => setUploadRes("ok"))
+          .catch((e: Error) => setUploadError(e));
+      } else {
+        const e = new Error("Image is not a Blob!");
+        setUploadError(e);
+        throw e;
+      }
+    },
+  });
 
   function handleImageFile(event: ChangeEvent<HTMLInputElement>) {
     if (event.target.files) {
@@ -101,11 +159,27 @@ export default function UploadImagePage() {
         accept="image/*"
       />
       <div className="flex w-full flex-col items-center">
-        <Button color="primary" onClick={() => uploadTestFile.mutate()}>
-          Upload test file
+        <Button
+          color="primary"
+          onClick={() => {
+            if (fileName && fileType)
+              void generatePreSignedUrl.mutate({
+                fileName,
+                contentType: fileType,
+              });
+          }}
+        >
+          Get presigned url
         </Button>
-        <p>{uploadTestFile.data?.message}</p>
-        <p className="text-red-400">{uploadTestFile.error?.message}</p>
+        <p>{generatePreSignedUrl.data?.preSignedUrl}</p>
+        <p className="text-red-400">{generatePreSignedUrl.error?.message}</p>
+        <p>{uploadRes}</p>
+        <p className="text-red-400">{uploadError?.message}</p>
+        <img
+          src="https://dev-virtual-sketchbook.s3.us-east-005.backblazeb2.com/Archery_FirstAge_Level1.png"
+          alt=""
+          className="block h-auto max-h-[300px] w-auto max-w-[300px]"
+        />
       </div>
     </UserPageLayout>
   );

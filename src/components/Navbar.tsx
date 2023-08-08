@@ -1,4 +1,5 @@
 import { useRouter } from "next/router";
+import Link from "next/link";
 import {
   Button,
   Dropdown,
@@ -12,18 +13,12 @@ import {
 
 type Path = { pathname: string };
 
-function PathSelector({
-  paths,
-  currentPathname,
-}: {
-  paths: Path[];
-  currentPathname: string;
-}) {
+function PathSelector({ paths }: { paths: Path[] }) {
   const router = useRouter();
   return (
     <Dropdown>
       <DropdownTrigger>
-        <Button variant="bordered">{currentPathname}</Button>
+        <Button variant="bordered">Select path</Button>
       </DropdownTrigger>
       <DropdownMenu aria-label="Single selection actions" variant="bordered">
         {paths.map((path) => (
@@ -34,7 +29,7 @@ function PathSelector({
               void router.push({ pathname: path.pathname });
             }}
           >
-            {path.pathname}
+            <Link href={path.pathname}>{path.pathname}</Link>
           </DropdownItem>
         ))}
       </DropdownMenu>
@@ -48,17 +43,16 @@ export function Navbar() {
       pathname,
     })
   );
-  const router = useRouter();
 
   return (
     <NextUINavbar maxWidth="full">
       <NavbarContent justify="end">
         <NavbarItem>Path</NavbarItem>
         <NavbarItem>
-          <PathSelector
-            paths={paths}
-            currentPathname={router.pathname || "/"}
-          />
+        paths
+        {
+        // <PathSelector paths={paths} />
+        }
         </NavbarItem>
       </NavbarContent>
     </NextUINavbar>

@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { apiInsertClickData, clicksPerPage } from "~/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { uploadFile } from "~/utils/lib/s3";
+import { getPreSignedUrl } from "~/utils/lib/s3";
 
 export const exampleRouter = createTRPCRouter({
   hello: publicProcedure
@@ -32,12 +32,19 @@ export const exampleRouter = createTRPCRouter({
 
       return { insertedId: res?.insertedId };
     }),
-  uploadTestFile: publicProcedure.mutation(async ({ ctx }) => {
-    /* await uploadFile({
-      key: Date.now().toString(),
-      content: Date.now().toString(),
-    }); */
+  generatePreSignedUrl: publicProcedure
+    .input(
+      z.object({ fileName: z.string().min(1), contentType: z.string().min(1) })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // console.log(input);
+      // return { preSignedUrl: "ok" };
+      const { preSignedUrl } = await getPreSignedUrl({
+        // fileName: input.fileName,
+        // contentType: input.contentType,
+        fileName: "hello-2.txt",
+      });
 
-    return { message: "not doing it now" };
-  }),
+      return { preSignedUrl };
+    }),
 });
