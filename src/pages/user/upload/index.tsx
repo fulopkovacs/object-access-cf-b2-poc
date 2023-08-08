@@ -15,22 +15,20 @@ import prettyBytes from "pretty-bytes";
 async function uploadFileToBucket({
   // fileName,
   fileContent,
-  contentType,
   url,
 }: {
   url: string;
-  contentType: string;
   fileContent: Blob;
 }) {
   try {
     // TODO: send `PUT` request
     const res = await fetch(decodeURIComponent(url), {
       method: "PUT",
-      body: "it works from the browser",
+      // body: "it works from the browser",
       /* headers: {
         "Content-Type": "text/plain",
       }, */
-      // body: fileContent,
+      body: fileContent,
       /* headers: {
         "Content-Type": contentType,
       }, */
@@ -86,7 +84,6 @@ export default function UploadImagePage() {
         void uploadFileToBucket({
           url: data.preSignedUrl,
           fileContent: image,
-          contentType: fileType,
         })
           .then(() => setUploadRes("ok"))
           .catch((e: Error) => setUploadError(e));

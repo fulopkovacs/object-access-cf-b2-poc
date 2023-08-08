@@ -34,15 +34,15 @@ export const exampleRouter = createTRPCRouter({
     }),
   generatePreSignedUrl: publicProcedure
     .input(
-      z.object({ fileName: z.string().min(1), contentType: z.string().min(1) })
+      z.object({ fileName: z.string().min(1) })
     )
     .mutation(async ({ ctx, input }) => {
       // console.log(input);
       // return { preSignedUrl: "ok" };
       const { preSignedUrl } = await getPreSignedUrl({
-        // fileName: input.fileName,
+        fileName: input.fileName,
         // contentType: input.contentType,
-        fileName: "hello-2.txt",
+        // fileName: "hello-2.txt",
       });
 
       return { preSignedUrl };
