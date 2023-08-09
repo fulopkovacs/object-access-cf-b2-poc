@@ -43,9 +43,9 @@ export const exampleRouter = createTRPCRouter({
         // contentType: input.contentType,
         // fileName: "hello-2.txt",
       });
-      const objectUrl = `https://${env.BUCKET_NAME}.s3.${env.BUCKET_REGION}.backblazeb2.com/${encodeURIComponent(
-        input.fileName
-      )}`;
+      const objectUrl = `https://${env.BUCKET_NAME}.s3.${
+        env.BUCKET_REGION
+      }.backblazeb2.com/${encodeURIComponent(input.fileName)}`;
 
       return { preSignedUrl, objectUrl };
     }),
