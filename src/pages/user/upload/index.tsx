@@ -5,6 +5,7 @@ import {
   useState,
   type ReactNode,
   useEffect,
+  useCallback,
 } from "react";
 import UserPageLayout from "~/components/UserPageLayout";
 import { Accordion, AccordionItem, Button, Code } from "@nextui-org/react";
@@ -12,6 +13,7 @@ import {
   ClipboardCopyIcon,
   CopyIcon,
   ImageIcon,
+  PlusIcon,
   RefreshCwIcon,
   UploadIcon,
 } from "lucide-react";
@@ -89,6 +91,12 @@ export default function UploadImagePage() {
 
   const generatePreSignedUrl = api.example.generatePreSignedUrl.useMutation();
 
+  /* const copyObjectUrl = useCallback(() => {
+    if (!!generatePreSignedUrl.data?.objectUrl) {
+      void navigator.clipboard.writeText(generatePreSignedUrl.data.objectUrl);
+    }
+  }, [generatePreSignedUrl.data?.objectUrl]); */
+
   function handleImageFile(event: ChangeEvent<HTMLInputElement>) {
     if (event.target.files) {
       const [imageFile] = event.target.files;
@@ -135,7 +143,7 @@ export default function UploadImagePage() {
             image ? (
               <RefreshCwIcon className="h-4 w-4" />
             ) : (
-              <UploadIcon className="h-4 w-4" />
+              <PlusIcon className="h-4 w-4" />
             )
           }
         >
@@ -155,6 +163,7 @@ export default function UploadImagePage() {
           color="primary"
           isLoading={uploadInProgress || generatePreSignedUrl.isLoading}
           isDisabled={!!uploadRes || !image}
+          startContent={<UploadIcon className="h-4 w-4" />}
           onClick={() => {
             if (fileName && fileType)
               void generatePreSignedUrl.mutate(
@@ -198,15 +207,18 @@ export default function UploadImagePage() {
               exit={{ opacity: 0 }}
             >
               <Code>{generatePreSignedUrl.data.objectUrl}</Code>
-              <Button isIconOnly size="sm">
-                <CopyIcon
-                  className="h-3 w-3"
-                  onClick={() => {
-                    void navigator.clipboard.writeText(
-                      generatePreSignedUrl.data.objectUrl
-                    );
-                  }}
-                />
+              <Button
+                isIconOnly
+                size="sm"
+                onClick={() => {
+                  if (generatePreSignedUrl.data.objectUrl) {
+                    navigator.clipboard
+                      .writeText(generatePreSignedUrl.data.objectUrl)
+                      .catch((e) => console.error(e));
+                  }
+                }}
+              >
+                <CopyIcon className="h-3 w-3" />
               </Button>
             </motion.div>
           </AnimatePresence>
