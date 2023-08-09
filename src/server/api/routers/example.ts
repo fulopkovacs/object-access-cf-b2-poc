@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { apiInsertClickData, clicksPerPage } from "~/db/schema";
+import { env } from "~/env.mjs";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { getPreSignedUrl } from "~/utils/lib/s3";
 
@@ -33,9 +34,7 @@ export const exampleRouter = createTRPCRouter({
       return { insertedId: res?.insertedId };
     }),
   generatePreSignedUrl: publicProcedure
-    .input(
-      z.object({ fileName: z.string().min(1) })
-    )
+    .input(z.object({ fileName: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
       // console.log(input);
       // return { preSignedUrl: "ok" };
@@ -44,7 +43,10 @@ export const exampleRouter = createTRPCRouter({
         // contentType: input.contentType,
         // fileName: "hello-2.txt",
       });
+      const objectUrl = `https://${env.BUCKET_NAME}.s3.${env.BUCKET_REGION}.backblazeb2.com/${encodeURIComponent(
+        input.fileName
+      )}`;
 
-      return { preSignedUrl };
+      return { preSignedUrl, objectUrl };
     }),
 });

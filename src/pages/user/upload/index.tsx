@@ -4,11 +4,18 @@ import {
   useRef,
   useState,
   type ReactNode,
+  useEffect,
 } from "react";
 import UserPageLayout from "~/components/UserPageLayout";
-import { Button } from "@nextui-org/react";
-import { ImageIcon, RefreshCwIcon, UploadIcon } from "lucide-react";
-import { motion } from "framer-motion";
+import { Accordion, AccordionItem, Button, Code } from "@nextui-org/react";
+import {
+  ClipboardCopyIcon,
+  CopyIcon,
+  ImageIcon,
+  RefreshCwIcon,
+  UploadIcon,
+} from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { api } from "~/utils/api";
 import prettyBytes from "pretty-bytes";
 
@@ -56,8 +63,13 @@ function FileDataLabel({ children }: { children: ReactNode }) {
 export default function UploadImagePage() {
   const [uploadRes, setUploadRes] = useState<string | undefined>();
   const [uploadError, setUploadError] = useState<Error | undefined>();
+  const [uploadInProgress, setUploadInProgress] = useState<boolean>(false);
 
   const [image, setImage] = useState<Blob | undefined | string>();
+
+  useEffect(() => {
+    setUploadRes(undefined);
+  }, [image]);
 
   const { fileUrl, fileName, fileSize, fileType } = useMemo(() => {
     if (image instanceof Blob) {
@@ -75,25 +87,7 @@ export default function UploadImagePage() {
 
   const filePickerInput = useRef<HTMLInputElement>(null);
 
-  const generatePreSignedUrl = api.example.generatePreSignedUrl.useMutation({
-    onError: (e) => {
-      console.error(e);
-    },
-    onSuccess: (data) => {
-      if (image instanceof Blob && fileType) {
-        void uploadFileToBucket({
-          url: data.preSignedUrl,
-          fileContent: image,
-        })
-          .then(() => setUploadRes("ok"))
-          .catch((e: Error) => setUploadError(e));
-      } else {
-        const e = new Error("Image is not a Blob!");
-        setUploadError(e);
-        throw e;
-      }
-    },
-  });
+  const generatePreSignedUrl = api.example.generatePreSignedUrl.useMutation();
 
   function handleImageFile(event: ChangeEvent<HTMLInputElement>) {
     if (event.target.files) {
@@ -155,29 +149,81 @@ export default function UploadImagePage() {
         type="file"
         accept="image/*"
       />
-      <div className="flex w-full flex-col items-center">
+      <div className="flex w-full flex-col items-center gap-4">
+        <p>Upload image using a pre-signed url.</p>
         <Button
           color="primary"
+          isLoading={uploadInProgress || generatePreSignedUrl.isLoading}
+          isDisabled={!!uploadRes || !image}
           onClick={() => {
             if (fileName && fileType)
-              void generatePreSignedUrl.mutate({
-                fileName,
-                contentType: fileType,
-              });
+              void generatePreSignedUrl.mutate(
+                {
+                  fileName,
+                },
+                {
+                  onError: (e) => {
+                    setUploadInProgress(false);
+                    console.error(e);
+                  },
+                  onSuccess: (data) => {
+                    setUploadInProgress(true);
+                    if (image instanceof Blob && fileType) {
+                      void uploadFileToBucket({
+                        url: data.preSignedUrl,
+                        fileContent: image,
+                      })
+                        .then(() => setUploadRes("ok"))
+                        .catch((e: Error) => setUploadError(e))
+                        .finally(() => setUploadInProgress(false));
+                    } else {
+                      const e = new Error("Image is not a Blob!");
+                      setUploadInProgress(false);
+                      setUploadError(e);
+                      throw e;
+                    }
+                  },
+                }
+              );
           }}
         >
-          Get presigned url
+          {uploadRes ? "Uploaded image" : "Upload image"}
         </Button>
-        <p>{generatePreSignedUrl.data?.preSignedUrl}</p>
-        <p className="text-red-400">{generatePreSignedUrl.error?.message}</p>
-        <p>{uploadRes}</p>
-        <p className="text-red-400">{uploadError?.message}</p>
-        <img
-          src="https://dev-virtual-sketchbook.s3.us-east-005.backblazeb2.com/Archery_FirstAge_Level1.png"
-          alt=""
-          className="block h-auto max-h-[300px] w-auto max-w-[300px]"
-        />
+        {generatePreSignedUrl.data?.objectUrl && (
+          <AnimatePresence>
+            <motion.div
+              className="flex items-center gap-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <Code>{generatePreSignedUrl.data.objectUrl}</Code>
+              <Button isIconOnly size="sm">
+                <CopyIcon
+                  className="h-3 w-3"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(
+                      generatePreSignedUrl.data.objectUrl
+                    );
+                  }}
+                />
+              </Button>
+            </motion.div>
+          </AnimatePresence>
+        )}
       </div>
+      {/* <Accordion>
+      <AccordionItem
+      key="1"
+      title="Details"
+      isDisabled={!!generatePreSignedUrl.data?.preSignedUrl}
+      >
+      <p key="1">{generatePreSignedUrl.data?.preSignedUrl}</p>
+      <p className="text-red-400">{generatePreSignedUrl.error?.message}</p>
+      <p>{uploadRes}</p>
+      <p className="text-red-400">{uploadError?.message}</p>
+      </AccordionItem>
+      </Accordion> */}
     </UserPageLayout>
   );
 }

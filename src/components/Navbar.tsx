@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import Link from "next/link";
+import NextLink from "next/link";
 import {
   Button,
   Dropdown,
@@ -9,6 +9,7 @@ import {
   NavbarContent,
   NavbarItem,
   Navbar as NextUINavbar,
+  Link,
 } from "@nextui-org/react";
 
 type Path = { pathname: string };
@@ -49,10 +50,12 @@ export function Navbar() {
       <NavbarContent justify="end">
         <NavbarItem>Path</NavbarItem>
         <NavbarItem>
-        paths
-        {
-        // <PathSelector paths={paths} />
-        }
+          {
+            // <PathSelector paths={paths} />
+            <Link href="/user/upload" as={NextLink}>
+              /user/upload
+            </Link>
+          }
         </NavbarItem>
       </NavbarContent>
     </NextUINavbar>
