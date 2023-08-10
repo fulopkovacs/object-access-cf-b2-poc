@@ -5,13 +5,13 @@ import {
   useState,
   type ReactNode,
   useEffect,
-  useCallback,
 } from "react";
 import UserPageLayout from "~/components/UserPageLayout";
-import { Accordion, AccordionItem, Button, Code } from "@nextui-org/react";
+import { Button, Code, Switch } from "@nextui-org/react";
 import {
-  ClipboardCopyIcon,
   CopyIcon,
+  EyeIcon,
+  EyeOffIcon,
   ImageIcon,
   PlusIcon,
   RefreshCwIcon,
@@ -20,6 +20,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { api } from "~/utils/api";
 import prettyBytes from "pretty-bytes";
+import { BucketType } from "~/utils/bucketTypes";
 
 async function uploadFileToBucket({
   // fileName,
@@ -67,6 +68,8 @@ export default function UploadImagePage() {
   const [uploadError, setUploadError] = useState<Error | undefined>();
   const [uploadInProgress, setUploadInProgress] = useState<boolean>(false);
 
+  const [privateBucket, setPrivateBucket] = useState<boolean>(true);
+
   const [image, setImage] = useState<Blob | undefined | string>();
 
   useEffect(() => {
@@ -90,12 +93,6 @@ export default function UploadImagePage() {
   const filePickerInput = useRef<HTMLInputElement>(null);
 
   const generatePreSignedUrl = api.example.generatePreSignedUrl.useMutation();
-
-  /* const copyObjectUrl = useCallback(() => {
-    if (!!generatePreSignedUrl.data?.objectUrl) {
-      void navigator.clipboard.writeText(generatePreSignedUrl.data.objectUrl);
-    }
-  }, [generatePreSignedUrl.data?.objectUrl]); */
 
   function handleImageFile(event: ChangeEvent<HTMLInputElement>) {
     if (event.target.files) {
@@ -159,6 +156,14 @@ export default function UploadImagePage() {
       />
       <div className="flex w-full flex-col items-center gap-4">
         <p>Upload image using a pre-signed url.</p>
+        <Switch
+          isSelected={privateBucket}
+          onValueChange={(v) => setPrivateBucket(v)}
+          startContent={<EyeIcon />}
+          endContent={<EyeOffIcon />}
+        >
+          Use a private bucket
+        </Switch>
         <Button
           color="primary"
           isLoading={uploadInProgress || generatePreSignedUrl.isLoading}
@@ -168,6 +173,7 @@ export default function UploadImagePage() {
             if (fileName && fileType)
               void generatePreSignedUrl.mutate(
                 {
+                  usePrivateBucket: privateBucket,
                   fileName,
                 },
                 {
@@ -178,7 +184,7 @@ export default function UploadImagePage() {
                   onSuccess: (data) => {
                     setUploadInProgress(true);
                     if (image instanceof Blob && fileType) {
-                      void uploadFileToBucket({
+                      uploadFileToBucket({
                         url: data.preSignedUrl,
                         fileContent: image,
                       })

@@ -34,18 +34,34 @@ export const exampleRouter = createTRPCRouter({
       return { insertedId: res?.insertedId };
     }),
   generatePreSignedUrl: publicProcedure
-    .input(z.object({ fileName: z.string().min(1) }))
+    .input(
+      z.object({
+        fileName: z.string().min(1),
+        usePrivateBucket: z.boolean(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       // console.log(input);
       // return { preSignedUrl: "ok" };
+      const [bucketName, bucketRegion, bucketEndpoint] = input.usePrivateBucket
+        ? [
+            env.PRIVATE_BUCKET_NAME,
+            env.PRIVATE_BUCKET_REGION,
+            env.PRIVATE_BUCKET_ENDPOINT,
+          ]
+        : [env.BUCKET_NAME, env.BUCKET_REGION, env.BUCKET_ENDPOINT];
+
       const { preSignedUrl } = await getPreSignedUrl({
         fileName: input.fileName,
+        bucketName,
+        bucketRegion,
+        bucketEndpoint,
         // contentType: input.contentType,
         // fileName: "hello-2.txt",
       });
-      const objectUrl = `https://${env.BUCKET_NAME}.s3.${
-        env.BUCKET_REGION
-      }.backblazeb2.com/${encodeURIComponent(input.fileName)}`;
+      const objectUrl = `https://${bucketName}.s3.${bucketRegion}.backblazeb2.com/${encodeURIComponent(
+        input.fileName
+      )}`;
 
       return { preSignedUrl, objectUrl };
     }),

@@ -90,15 +90,21 @@ export const main = async () => {
   }
 };
 
-function createS3Client() {
+function createS3Client({
+  bucketEndpoint,
+  bucketRegion,
+}: {
+  bucketEndpoint: string;
+  bucketRegion: string;
+}) {
   /**
     Create an S3 client
     You must copy the endpoint from your B2 bucket details
     and set the region to match.
   */
   const s3 = new S3Client({
-    endpoint: env.BUCKET_ENDPOINT,
-    region: env.BUCKET_REGION,
+    endpoint: bucketEndpoint,
+    region: bucketRegion,
     credentials: {
       accessKeyId: env.aws_access_key_id,
       secretAccessKey: env.aws_secret_access_key,
@@ -111,16 +117,22 @@ function createS3Client() {
 export async function uploadFile({
   key,
   content,
+  bucketRegion,
+  bucketEndpoint,
+  bucketName,
 }: {
   key: string;
   content: string;
+  bucketName: string;
+  bucketRegion: string;
+  bucketEndpoint: string;
 }) {
-  const s3 = createS3Client();
+  const s3 = createS3Client({ bucketEndpoint, bucketRegion });
 
   try {
     await s3.send(
       new PutObjectCommand({
-        Bucket: env.BUCKET_NAME,
+        Bucket: bucketName,
         Key: key,
         Body: content,
       })
@@ -136,27 +148,26 @@ export async function uploadFile({
 
 export async function getPreSignedUrl({
   fileName,
-  // contentType,
+  bucketName,
+  bucketRegion,
+  bucketEndpoint,
 }: {
   fileName: string;
-  // contentType: string;
+  bucketName: string;
+  bucketRegion: string;
+  bucketEndpoint: string;
 }): Promise<{
   preSignedUrl: string;
 }> {
-  const client = createS3Client();
+  const s3 = createS3Client({ bucketEndpoint, bucketRegion });
 
-  /* const command = new PutObjectCommand({
-    Bucket: env.BUCKET_NAME,
-    Key: fileName,
-  }); */
   const command = new PutObjectCommand({
-    Bucket: env.BUCKET_NAME,
+    Bucket: bucketName,
     Key: fileName,
   });
 
-  const preSignedUrl = await getSignedUrl(client, command, {
+  const preSignedUrl = await getSignedUrl(s3, command, {
     expiresIn: 3600,
-    // signableHeaders: new Set("Content-Type"),
   });
 
   return { preSignedUrl };
