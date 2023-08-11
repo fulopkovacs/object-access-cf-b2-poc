@@ -15,8 +15,13 @@ export const env = createEnv({
     PRIVATE_BUCKET_NAME: z.string().min(1),
     PRIVATE_BUCKET_REGION: z.string().min(1),
     PRIVATE_BUCKET_ENDPOINT: z.string().min(1),
+    PRIVATE_BUCKET_ID: z.string().min(1),
+    PRIVATE_BUCKET_PROXY: z.string().min(1),
     aws_access_key_id: z.string().min(1),
     aws_secret_access_key: z.string().min(1),
+    CLOUDFARE_API_TOKEN: z.string().min(1),
+    CLOUDFARE_ZONE_ID: z.string().min(1),
+    CLOUDFARE_ACCOUNT_ID: z.string().min(1),
   },
 
   /**
@@ -41,8 +46,14 @@ export const env = createEnv({
     PRIVATE_BUCKET_NAME: process.env.PRIVATE_BUCKET_NAME,
     PRIVATE_BUCKET_REGION: process.env.PRIVATE_BUCKET_REGION,
     PRIVATE_BUCKET_ENDPOINT: process.env.BUCKET_ENDPOINT,
+    PRIVATE_BUCKET_ID: process.env.PRIVATE_BUCKET_ID,
+    PRIVATE_BUCKET_PROXY:
+      process.env.PRIVATE_BUCKET_PROXY,
     aws_access_key_id: process.env.aws_access_key_id,
     aws_secret_access_key: process.env.aws_secret_access_key,
+    CLOUDFARE_API_TOKEN: process.env.CLOUDFARE_API_TOKEN,
+    CLOUDFARE_ZONE_ID: process.env.CLOUDFARE_ZONE_ID,
+    CLOUDFARE_ACCOUNT_ID: process.env.CLOUDFARE_ACCOUNT_ID,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**
