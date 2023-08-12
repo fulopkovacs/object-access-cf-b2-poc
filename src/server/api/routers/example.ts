@@ -1,10 +1,17 @@
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { apiInsertClickData, clicksPerPage, images } from "~/db/schema";
 import { env } from "~/env.mjs";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { writeToCloudfareKV } from "~/utils/lib/cf";
+import {
+  deleteFromKVStore,
+  writeToCloudfareKV as writeToCloudfareKVStore,
+} from "~/utils/lib/cf";
 import { getPreSignedUrl } from "~/utils/lib/s3";
+
+function getKeyInKVStore({ fileName }: { fileName: string }) {
+  return `/file/${env.PRIVATE_BUCKET_NAME}/${fileName}`;
+}
 
 export const exampleRouter = createTRPCRouter({
   hello: publicProcedure
@@ -38,6 +45,37 @@ export const exampleRouter = createTRPCRouter({
     const imagesFromDb = await ctx.db.select().from(images).all();
     return imagesFromDb;
   }),
+  updateObjectAccess: publicProcedure
+    .input(
+      z.object({
+        isPublic: z.boolean(),
+        fileName: z.string().min(1),
+        imageId: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const key = getKeyInKVStore({ fileName: input.fileName });
+      let operation: string;
+
+      if (input.isPublic) {
+        // make it public
+        const value = "public";
+        await writeToCloudfareKVStore({ key, value });
+        operation = "added";
+      } else {
+        // make it private
+        await deleteFromKVStore({ key });
+        operation = "deleted";
+      }
+
+      await ctx.db
+        .update(images)
+        .set({ public: input.isPublic })
+        .where(eq(images.id, input.imageId))
+        .all();
+
+      return { key, operation };
+    }),
   generatePreSignedUrl: publicProcedure
     .input(
       z.object({
@@ -61,8 +99,8 @@ export const exampleRouter = createTRPCRouter({
 
       if (input.isPublic) {
         // Update CF KV
-        await writeToCloudfareKV({
-          key: `/file/${env.PRIVATE_BUCKET_NAME}/${input.fileName}`,
+        await writeToCloudfareKVStore({
+          key: getKeyInKVStore({ fileName: input.fileName }),
           value: "public",
         });
       }

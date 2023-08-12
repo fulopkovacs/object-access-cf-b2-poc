@@ -1,6 +1,7 @@
-import { Card, CardBody, Image } from "@nextui-org/react";
-import { EyeIcon, EyeOffIcon, ImageOffIcon } from "lucide-react";
+import { Link, Card, CardBody, Image, Switch } from "@nextui-org/react";
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 import prettyBytes from "pretty-bytes";
+import { useState } from "react";
 import UserPageLayout from "~/components/UserPageLayout";
 import { api } from "~/utils/api";
 
@@ -14,49 +15,96 @@ type ImageData = {
   created_at: number;
 };
 
-function ImageCard({ imageData }: { imageData: ImageData }) {
+type ImageDataProps = { imageData: ImageData };
+
+function MakeImagePublicSwitch({ imageData }: ImageDataProps) {
+  const [isPublic, setIsPublic] = useState(imageData.public);
+  const utils = api.useContext();
+  /**
+  It takes 60 seconds max to synchronise the
+  Cloudfare KV store instances on all edge points.
+  (It's an eventually consistent KV storage.)
+  */
+  const maxKVsyncTime = 60; // 60 sec = 1 min
+
+  const updateObjectAccess = api.example.updateObjectAccess.useMutation({
+    onSuccess: async () => {
+      await utils.example.getAllImages.invalidate();
+    },
+    onError: () => {
+      // revert to the old value
+      setIsPublic((v) => !v);
+    },
+  });
+
+  function changeObjectAccess(newIsPublicValue: boolean) {
+    setIsPublic(newIsPublicValue);
+    updateObjectAccess.mutate({
+      imageId: imageData.id,
+      isPublic: newIsPublicValue,
+      fileName: imageData.filename,
+    });
+  }
+
   return (
-    <a target="_blank" href={imageData.url}>
-      <Card className="max-h-40 cursor-pointer gap-3 py-4">
-        <CardBody className="flex  flex-row gap-3 py-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <div className="w-1/2">
-            {imageData.public ? (
-              <Image
-                removeWrapper
-                alt="Card background"
-                className="h-full rounded-xl object-cover"
-                src={imageData.url}
-                width={270}
-                height={200}
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-neutral-400">
-                <EyeOffIcon />
-              </div>
-            )}
-          </div>
-          <div className="w-1/2">
-            <h2>{imageData.filename}</h2>
-            <small className="block text-neutral-400">
-              {prettyBytes(imageData.size)}
-            </small>
-            <small className="flex items-center gap-1 text-neutral-400">
-              {imageData.public ? (
-                <EyeIcon className="h-4 w-4" />
-              ) : (
-                <EyeOffIcon className="h-4 w-4" />
-              )}
-              {imageData.public ? "public" : "private"}
-            </small>
-            <small className="flex items-center gap-1 text-neutral-400">
-              {" "}
-              {new Date(imageData.created_at).toLocaleString()}
-            </small>
-          </div>
-        </CardBody>
-      </Card>
-    </a>
+    <Switch
+      isDisabled={updateObjectAccess.isLoading}
+      size="sm"
+      isSelected={isPublic}
+      onValueChange={(v) => void changeObjectAccess(v)}
+      startContent={<EyeIcon />}
+      endContent={<EyeOffIcon />}
+      className="group/switch mt-2"
+    >
+      <span className="opacity-50 transition-opacity group-data-[selected=true]/switch:opacity-100">
+        Make image public
+      </span>
+    </Switch>
+  );
+}
+
+function ImageCard({ imageData }: ImageDataProps) {
+  return (
+    <Card className="h-56 cursor-pointer py-4">
+      <CardBody className="flex  flex-row gap-8 py-2">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <div className="w-1/2">
+          {imageData.public ? (
+            <Image
+              removeWrapper
+              alt="Card background"
+              className="h-full rounded-xl object-cover"
+              src={imageData.url}
+              width={270}
+              height={200}
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-gray-700 text-neutral-400">
+              <EyeOffIcon />
+            </div>
+          )}
+        </div>
+        <div className="flex h-full w-1/2 flex-col">
+          <h2 className="mb-2 font-semibold">{imageData.filename}</h2>
+          <small className="block text-neutral-400">
+            {prettyBytes(imageData.size)}
+          </small>
+          <small className="flex items-center gap-1 text-neutral-400">
+            {new Date(imageData.created_at).toLocaleString()}
+          </small>
+          <MakeImagePublicSwitch imageData={imageData} />
+          <Link
+            size="sm"
+            className="mt-auto"
+            showAnchorIcon
+            target="_blank"
+            href={imageData.url}
+          >
+            View image
+          </Link>
+        </div>
+      </CardBody>
+    </Card>
   );
 }
 
