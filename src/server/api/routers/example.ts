@@ -2,12 +2,27 @@ import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { apiInsertClickData, clicksPerPage, images } from "~/db/schema";
 import { env } from "~/env.mjs";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import {
+  createTRPCRouter,
+  privateProcedure,
+  publicProcedure,
+} from "~/server/api/trpc";
 import {
   deleteFromKVStore,
   writeToCloudfareKV as writeToCloudfareKVStore,
 } from "~/utils/lib/cf";
 import { getPreSignedUrl } from "~/utils/lib/s3";
+
+export type ImageDataWithAuthenticatedUrl = {
+  authenticatedUrl: string | undefined;
+  id: number;
+  filename: string;
+  public: boolean;
+  url: string;
+  size: number;
+  filetype: string;
+  created_at: number;
+};
 
 function getKeyInKVStore({ fileName }: { fileName: string }) {
   return `/file/${env.PRIVATE_BUCKET_NAME}/${fileName}`;
@@ -41,9 +56,34 @@ export const exampleRouter = createTRPCRouter({
 
       return { insertedId: res?.insertedId };
     }),
-  getAllImages: publicProcedure.query(async ({ ctx }) => {
+  getAllImages: privateProcedure.query(async ({ ctx }) => {
+    // let's pretend it's actually a privateRoute
     const imagesFromDb = await ctx.db.select().from(images).all();
-    return imagesFromDb;
+    const authenticatedUrls = await Promise.all(
+      imagesFromDb.map((image) =>
+        getPreSignedUrl({
+          fileName: image.filename,
+          bucketName: env.PRIVATE_BUCKET_NAME,
+          bucketRegion: env.PRIVATE_BUCKET_REGION,
+          bucketEndpoint: env.PRIVATE_BUCKET_ENDPOINT,
+          commandType: "GET",
+        })
+      )
+    );
+
+    const imagesWithAuthenticatedUrls: ImageDataWithAuthenticatedUrl[] = [];
+
+    for (let i = 0; i < imagesFromDb.length; i++) {
+      const imageFromDb = imagesFromDb[i];
+      if (imageFromDb) {
+        imagesWithAuthenticatedUrls.push({
+          ...imageFromDb,
+          authenticatedUrl: authenticatedUrls[i]?.preSignedUrl,
+        });
+      }
+    }
+
+    return imagesWithAuthenticatedUrls;
   }),
   updateObjectAccess: publicProcedure
     .input(
@@ -91,6 +131,7 @@ export const exampleRouter = createTRPCRouter({
         bucketName: env.PRIVATE_BUCKET_NAME,
         bucketRegion: env.PRIVATE_BUCKET_REGION,
         bucketEndpoint: env.PRIVATE_BUCKET_ENDPOINT,
+        commandType: "PUT",
       });
 
       const objectUrl = `${env.PRIVATE_BUCKET_PROXY}/file/${

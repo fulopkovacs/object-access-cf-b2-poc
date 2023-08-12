@@ -1,4 +1,8 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
 import { env } from "~/env.mjs";
 
 import https from "https";
@@ -151,23 +155,29 @@ export async function getPreSignedUrl({
   bucketName,
   bucketRegion,
   bucketEndpoint,
+  commandType,
 }: {
   fileName: string;
   bucketName: string;
   bucketRegion: string;
   bucketEndpoint: string;
+  commandType: "PUT" | "GET";
 }): Promise<{
   preSignedUrl: string;
 }> {
   const s3 = createS3Client({ bucketEndpoint, bucketRegion });
 
-  const command = new PutObjectCommand({
-    Bucket: bucketName,
-    Key: fileName,
-  });
+  const expiresIn = 3600; // a week
+
+  const command = commandType
+    ? new GetObjectCommand({ Bucket: bucketName, Key: fileName })
+    : new PutObjectCommand({
+        Bucket: bucketName,
+        Key: fileName,
+      });
 
   const preSignedUrl = await getSignedUrl(s3, command, {
-    expiresIn: 3600,
+    expiresIn,
   });
 
   return { preSignedUrl };

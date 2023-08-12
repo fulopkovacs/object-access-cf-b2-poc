@@ -13,22 +13,15 @@ import UserPageLayout from "~/components/UserPageLayout";
 import { api } from "~/utils/api";
 import { useTimer } from "react-timer-hook";
 import { AnimatePresence, motion } from "framer-motion";
+import { AuthenticatedImageComponent } from "~/components/AuthenticatedImageComponent";
+import { ImageDataWithAuthenticatedUrl } from "~/server/api/routers/example";
 
-type ImageData = {
-  id: number;
-  filename: string;
-  public: boolean;
-  url: string;
-  size: number;
-  filetype: string;
-  created_at: number;
-};
-
-type ImageDataProps = { imageData: ImageData };
+type ImageDataProps = { imageData: ImageDataWithAuthenticatedUrl };
 
 function MakeImagePublicSwitch({ imageData }: ImageDataProps) {
-  const [isPublic, setIsPublic] = useState(imageData.public);
-  const utils = api.useContext();
+  const [isPublic, setIsPublic] = useState<boolean>(imageData.public);
+  // const utils = api.useContext();
+
   /**
   KV is eventually-consistent, so:
 
@@ -57,7 +50,7 @@ function MakeImagePublicSwitch({ imageData }: ImageDataProps) {
 
   const updateObjectAccess = api.example.updateObjectAccess.useMutation({
     onSuccess: async () => {
-      await utils.example.getAllImages.invalidate();
+      // await utils.example.getAllImages.invalidate();
       const time = new Date();
       time.setSeconds(time.getSeconds() + maxKVsyncTime);
       restart(time);
@@ -125,20 +118,14 @@ function ImageCard({ imageData }: ImageDataProps) {
       <CardBody className="flex  flex-row gap-8 py-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <div className="w-1/2">
-          {imageData.public ? (
-            <Image
-              removeWrapper
-              alt="Card background"
-              className="h-full rounded-xl object-cover"
-              src={imageData.url}
-              width={270}
-              height={200}
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-gray-700 text-neutral-400">
-              <EyeOffIcon />
-            </div>
-          )}
+          <Image
+            removeWrapper
+            alt="Card background"
+            className="h-full rounded-xl object-cover"
+            src={imageData.authenticatedUrl ?? imageData.url}
+            width={270}
+            height={200}
+          />
         </div>
         <div className="min-w-1/2 flex h-full w-1/2 flex-col">
           <h2 className="mb-2 font-semibold">{imageData.filename}</h2>
@@ -165,7 +152,10 @@ function ImageCard({ imageData }: ImageDataProps) {
 }
 
 export default function ImagesPage() {
-  const getImages = api.example.getAllImages.useQuery();
+  const getImages = api.example.getAllImages.useQuery(undefined, {
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
 
   return (
     <UserPageLayout>
