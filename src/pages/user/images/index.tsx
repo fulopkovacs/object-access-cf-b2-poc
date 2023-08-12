@@ -13,7 +13,6 @@ import UserPageLayout from "~/components/UserPageLayout";
 import { api } from "~/utils/api";
 import { useTimer } from "react-timer-hook";
 import { AnimatePresence, motion } from "framer-motion";
-import { AuthenticatedImageComponent } from "~/components/AuthenticatedImageComponent";
 import { ImageDataWithAuthenticatedUrl } from "~/server/api/routers/example";
 
 type ImageDataProps = { imageData: ImageDataWithAuthenticatedUrl };
@@ -49,8 +48,7 @@ function MakeImagePublicSwitch({ imageData }: ImageDataProps) {
   });
 
   const updateObjectAccess = api.example.updateObjectAccess.useMutation({
-    onSuccess: async () => {
-      // await utils.example.getAllImages.invalidate();
+    onSuccess: () => {
       const time = new Date();
       time.setSeconds(time.getSeconds() + maxKVsyncTime);
       restart(time);
@@ -83,7 +81,7 @@ function MakeImagePublicSwitch({ imageData }: ImageDataProps) {
         onValueChange={(v) => void changeObjectAccess(v)}
         startContent={<EyeIcon />}
         endContent={<EyeOffIcon />}
-        className="group/switch mt-2"
+        className="group/switch my-1"
       >
         <span className="opacity-50 transition-opacity group-data-[selected=true]/switch:opacity-100">
           Make image public
@@ -114,20 +112,20 @@ function MakeImagePublicSwitch({ imageData }: ImageDataProps) {
 
 function ImageCard({ imageData }: ImageDataProps) {
   return (
-    <Card className="h-60 cursor-pointer py-4">
-      <CardBody className="flex  flex-row gap-8 py-2">
+    <Card className="max-w-sm py-4 md:h-60 md:max-w-full">
+      <CardBody className="flex gap-8 py-2 md:flex-row">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <div className="w-1/2">
+        <div className="w-full md:w-1/2">
           <Image
             removeWrapper
             alt="Card background"
-            className="h-full rounded-xl object-cover"
+            className="h-40 w-full rounded-xl object-cover object-almost-top md:h-full md:w-auto"
             src={imageData.authenticatedUrl ?? imageData.url}
             width={270}
             height={200}
           />
         </div>
-        <div className="min-w-1/2 flex h-full w-1/2 flex-col">
+        <div className="md:min-w-1/2 flex flex-col gap-1 md:h-full md:w-1/2">
           <h2 className="mb-2 font-semibold">{imageData.filename}</h2>
           <small className="block text-neutral-400">
             {prettyBytes(imageData.size)}
@@ -138,7 +136,7 @@ function ImageCard({ imageData }: ImageDataProps) {
           <MakeImagePublicSwitch imageData={imageData} />
           <Link
             size="sm"
-            className="mt-auto"
+            className="md:mt-auto"
             showAnchorIcon
             target="_blank"
             href={imageData.url}
@@ -152,17 +150,14 @@ function ImageCard({ imageData }: ImageDataProps) {
 }
 
 export default function ImagesPage() {
-  const getImages = api.example.getAllImages.useQuery(undefined, {
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-  });
+  const getImages = api.example.getAllImages.useQuery(undefined);
 
   return (
     <UserPageLayout>
       <h1 className="text-center text-3xl font-semibold tracking-tight">
         Images
       </h1>
-      <div className="mx-auto grid w-full max-w-xl grid-cols-1 gap-6 px-6 py-10">
+      <div className="mx-auto grid w-full max-w-xl items-center justify-center gap-6 px-6 py-10 md:grid-cols-1">
         {getImages.data?.map((image) => (
           // <div key={image.id}>{image.filename}</div>
           <ImageCard key={image.id} imageData={image} />

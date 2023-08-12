@@ -15,6 +15,7 @@ import {
 import { parseUrl } from "@aws-sdk/url-parser";
 import { formatUrl } from "@aws-sdk/util-format-url";
 import { Hash } from "@aws-sdk/hash-node";
+import { AUTHENTICATED_URL_EXPIRY } from "../constants";
 
 const createPresignedUrlWithoutClient = async ({ region, bucket, key }) => {
   const url = parseUrl(`https://${bucket}.s3.${region}.amazonaws.com/${key}`);
@@ -151,13 +152,13 @@ export async function uploadFile({
 }
 
 export async function getPreSignedUrl({
-  fileName,
+  key,
   bucketName,
   bucketRegion,
   bucketEndpoint,
   commandType,
 }: {
-  fileName: string;
+  key: string;
   bucketName: string;
   bucketRegion: string;
   bucketEndpoint: string;
@@ -167,14 +168,15 @@ export async function getPreSignedUrl({
 }> {
   const s3 = createS3Client({ bucketEndpoint, bucketRegion });
 
-  const expiresIn = 3600; // a week
+  const expiresIn = commandType === "GET" ? AUTHENTICATED_URL_EXPIRY : 3600;
 
-  const command = commandType
-    ? new GetObjectCommand({ Bucket: bucketName, Key: fileName })
-    : new PutObjectCommand({
-        Bucket: bucketName,
-        Key: fileName,
-      });
+  const command =
+    commandType === "GET"
+      ? new GetObjectCommand({ Bucket: bucketName, Key: key })
+      : new PutObjectCommand({
+          Bucket: bucketName,
+          Key: key,
+        });
 
   const preSignedUrl = await getSignedUrl(s3, command, {
     expiresIn,

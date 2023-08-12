@@ -9,7 +9,11 @@ export default {
   ],
   theme: {
     // colors: { ...grayDark, ...yellowDark },
-    extend: {},
+    extend: {
+      objectPosition: {
+        'almost-top': '50% 25%'
+      }
+    },
   },
   darkMode: "class",
   plugins: [

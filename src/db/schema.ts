@@ -1,4 +1,4 @@
-import { getTableColumns, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { sqliteTable, text, int, index } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
@@ -45,6 +45,10 @@ export const images = sqliteTable(
     url: text("url").unique().notNull(),
     size: int("size").notNull(),
     filetype: text("filetype").notNull(),
+    authenticated_url: text("authenticated_url").notNull(),
+    authenticated_url_expiry_timestamp: int(
+      "authenticated_url_created_at"
+    ).notNull(),
     created_at: int("created_at")
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),

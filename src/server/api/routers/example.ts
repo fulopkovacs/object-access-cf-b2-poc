@@ -7,6 +7,7 @@ import {
   privateProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
+import { AUTHENTICATED_URL_EXPIRY } from "~/utils/constants";
 import {
   deleteFromKVStore,
   writeToCloudfareKV as writeToCloudfareKVStore,
@@ -24,8 +25,8 @@ export type ImageDataWithAuthenticatedUrl = {
   created_at: number;
 };
 
-function getKeyInKVStore({ fileName }: { fileName: string }) {
-  return `/file/${env.PRIVATE_BUCKET_NAME}/${fileName}`;
+function getKeyInKVStore({ key }: { key: string }) {
+  return `/file/${env.PRIVATE_BUCKET_NAME}/${key}`;
 }
 
 export const exampleRouter = createTRPCRouter({
@@ -56,35 +57,63 @@ export const exampleRouter = createTRPCRouter({
 
       return { insertedId: res?.insertedId };
     }),
-  getAllImages: privateProcedure.query(async ({ ctx }) => {
-    // let's pretend it's actually a privateRoute
-    const imagesFromDb = await ctx.db.select().from(images).all();
-    const authenticatedUrls = await Promise.all(
-      imagesFromDb.map((image) =>
-        getPreSignedUrl({
-          fileName: image.filename,
-          bucketName: env.PRIVATE_BUCKET_NAME,
-          bucketRegion: env.PRIVATE_BUCKET_REGION,
-          bucketEndpoint: env.PRIVATE_BUCKET_ENDPOINT,
-          commandType: "GET",
-        })
-      )
-    );
+  getAllImages:
+    // Let's pretend it's actually a private procedure
+    privateProcedure.query(async ({ ctx }) => {
+      const imagesFromDb = await ctx.db.select().from(images).all();
 
-    const imagesWithAuthenticatedUrls: ImageDataWithAuthenticatedUrl[] = [];
+      // We take away 5 mins just to be safe
+      const currentTimestamp = Date.now() - 5 * 60 * 1000;
+      const expiryTimestamp = Date.now() + AUTHENTICATED_URL_EXPIRY * 1000;
 
-    for (let i = 0; i < imagesFromDb.length; i++) {
-      const imageFromDb = imagesFromDb[i];
-      if (imageFromDb) {
-        imagesWithAuthenticatedUrls.push({
-          ...imageFromDb,
-          authenticatedUrl: authenticatedUrls[i]?.preSignedUrl,
-        });
+      const imagesWithExpiredAuthenticatedUrls = imagesFromDb.filter((d) => {
+        d.authenticated_url_expiry_timestamp > currentTimestamp;
+      });
+
+      const newAuthenticatedUrls = await Promise.all(
+        imagesWithExpiredAuthenticatedUrls.map((image) =>
+          getPreSignedUrl({
+            key: image.filename,
+            bucketName: env.PRIVATE_BUCKET_NAME,
+            bucketRegion: env.PRIVATE_BUCKET_REGION,
+            bucketEndpoint: env.PRIVATE_BUCKET_ENDPOINT,
+            commandType: "GET",
+          })
+        )
+      );
+
+      const idsToNewAuthenticatedUrls =
+        imagesWithExpiredAuthenticatedUrls.reduce<
+          Map<number, string | undefined>
+        >(
+          (map, c, i) => map.set(c.id, newAuthenticatedUrls[i]?.preSignedUrl),
+          new Map()
+        );
+
+      await Promise.all(
+        imagesWithExpiredAuthenticatedUrls.map((imageData) =>
+          ctx.db.update(images).set({
+            authenticated_url: idsToNewAuthenticatedUrls.get(imageData.id),
+            authenticated_url_expiry_timestamp: expiryTimestamp,
+          })
+        )
+      );
+
+      const imagesWithAuthenticatedUrls: ImageDataWithAuthenticatedUrl[] = [];
+
+      for (const imageFromDb of imagesFromDb) {
+        if (imageFromDb) {
+          imagesWithAuthenticatedUrls.push({
+            ...imageFromDb,
+            authenticatedUrl:
+              idsToNewAuthenticatedUrls.get(imageFromDb.id) ??
+              imageFromDb.authenticated_url,
+          });
+        }
       }
-    }
 
-    return imagesWithAuthenticatedUrls;
-  }),
+      return imagesWithAuthenticatedUrls;
+    }),
   updateObjectAccess: publicProcedure
     .input(
       z.object({
@@ -94,7 +123,7 @@ export const exampleRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const key = getKeyInKVStore({ fileName: input.fileName });
+      const key = getKeyInKVStore({ key: input.fileName });
       let operation: string;
 
       if (input.isPublic) {
@@ -127,11 +156,19 @@ export const exampleRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { preSignedUrl } = await getPreSignedUrl({
-        fileName: input.fileName,
+        key: input.fileName,
         bucketName: env.PRIVATE_BUCKET_NAME,
         bucketRegion: env.PRIVATE_BUCKET_REGION,
         bucketEndpoint: env.PRIVATE_BUCKET_ENDPOINT,
         commandType: "PUT",
+      });
+
+      const { preSignedUrl: authenticatedUrl } = await getPreSignedUrl({
+        key: input.fileName,
+        bucketName: env.PRIVATE_BUCKET_NAME,
+        bucketRegion: env.PRIVATE_BUCKET_REGION,
+        bucketEndpoint: env.PRIVATE_BUCKET_ENDPOINT,
+        commandType: "GET",
       });
 
       const objectUrl = `${env.PRIVATE_BUCKET_PROXY}/file/${
@@ -141,10 +178,13 @@ export const exampleRouter = createTRPCRouter({
       if (input.isPublic) {
         // Update CF KV
         await writeToCloudfareKVStore({
-          key: getKeyInKVStore({ fileName: input.fileName }),
+          key: getKeyInKVStore({ key: input.fileName }),
           value: "public",
         });
       }
+
+      const authenticated_url_expiry_timestamp =
+        Date.now() + AUTHENTICATED_URL_EXPIRY * 1000;
 
       // Record data about the image in the database
       await ctx.db
@@ -155,6 +195,8 @@ export const exampleRouter = createTRPCRouter({
           url: objectUrl,
           filetype: input.fileType,
           size: input.fileSize,
+          authenticated_url: authenticatedUrl,
+          authenticated_url_expiry_timestamp,
         })
         .onConflictDoUpdate({
           target: images.url,
