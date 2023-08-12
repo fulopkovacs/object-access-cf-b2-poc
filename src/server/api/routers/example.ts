@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { z } from "zod";
-import { apiInsertClickData, clicksPerPage } from "~/db/schema";
+import { apiInsertClickData, clicksPerPage, images } from "~/db/schema";
 import { env } from "~/env.mjs";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { getPreSignedUrl } from "~/utils/lib/s3";
@@ -37,35 +37,37 @@ export const exampleRouter = createTRPCRouter({
     .input(
       z.object({
         fileName: z.string().min(1),
-        usePrivateBucket: z.boolean(),
+        isPublic: z.boolean(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // console.log(input);
-      // return { preSignedUrl: "ok" };
-      const [bucketName, bucketRegion, bucketEndpoint] = input.usePrivateBucket
-        ? [
-            env.PRIVATE_BUCKET_NAME,
-            env.PRIVATE_BUCKET_REGION,
-            env.PRIVATE_BUCKET_ENDPOINT,
-          ]
-        : [env.BUCKET_NAME, env.BUCKET_REGION, env.BUCKET_ENDPOINT];
-
       const { preSignedUrl } = await getPreSignedUrl({
         fileName: input.fileName,
-        bucketName,
-        bucketRegion,
-        bucketEndpoint,
-        // contentType: input.contentType,
-        // fileName: "hello-2.txt",
+        bucketName: env.PRIVATE_BUCKET_NAME,
+        bucketRegion: env.PRIVATE_BUCKET_REGION,
+        bucketEndpoint: env.PRIVATE_BUCKET_ENDPOINT,
       });
-      const objectUrl = input.usePrivateBucket
-        ? `${env.PRIVATE_BUCKET_PROXY}/file/${
-            env.PRIVATE_BUCKET_NAME
-          }/${encodeURIComponent(input.fileName)}`
-        : `https://${bucketName}.s3.${bucketRegion}.backblazeb2.com/${encodeURIComponent(
-            input.fileName
-          )}`;
+
+      const objectUrl = `${env.PRIVATE_BUCKET_PROXY}/file/${
+        env.PRIVATE_BUCKET_NAME
+      }/${encodeURIComponent(input.fileName)}`;
+
+      // Record data about the image in the database
+      await ctx.db
+        .insert(images)
+        .values({
+          filename: input.fileName,
+          public: input.isPublic ? 1 : 0,
+          url: objectUrl,
+        })
+        .onConflictDoUpdate({
+          target: images.url,
+          set: {
+            filename: input.fileName,
+            public: input.isPublic ? 1 : 0,
+          },
+        })
+        .all();
 
       return { preSignedUrl, objectUrl };
     }),

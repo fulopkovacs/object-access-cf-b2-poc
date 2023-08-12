@@ -68,7 +68,7 @@ export default function UploadImagePage() {
   const [uploadError, setUploadError] = useState<Error | undefined>();
   const [uploadInProgress, setUploadInProgress] = useState<boolean>(false);
 
-  const [privateBucket, setPrivateBucket] = useState<boolean>(true);
+  const [isPublic, setIsPublic] = useState<boolean>(true);
 
   const [image, setImage] = useState<Blob | undefined | string>();
 
@@ -157,12 +157,15 @@ export default function UploadImagePage() {
       <div className="flex w-full flex-col items-center gap-4">
         <p>Upload image using a pre-signed url.</p>
         <Switch
-          isSelected={privateBucket}
-          onValueChange={(v) => setPrivateBucket(v)}
+          isSelected={isPublic}
+          onValueChange={(v) => setIsPublic(v)}
           startContent={<EyeIcon />}
           endContent={<EyeOffIcon />}
+          className="group/switch"
         >
-          Use a private bucket
+          <span className="opacity-50 transition-opacity group-data-[selected=true]/switch:opacity-100">
+            Make image public
+          </span>
         </Switch>
         <Button
           color="primary"
@@ -173,7 +176,7 @@ export default function UploadImagePage() {
             if (fileName && fileType)
               void generatePreSignedUrl.mutate(
                 {
-                  usePrivateBucket: privateBucket,
+                  isPublic: isPublic,
                   fileName,
                 },
                 {

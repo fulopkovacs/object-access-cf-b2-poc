@@ -1,4 +1,5 @@
-import { sqliteTable, text, int } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+import { sqliteTable, text, int, time, index } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 export const clicksPerPage = sqliteTable("clicks_per_page", {
@@ -33,3 +34,30 @@ export const apiInsertClickData = insertClickDataSchema.omit({
 // Schema for selecting a user - can be used to validate API responses
 export const selectUserSchema = createSelectSchema(users);
 export const selectClickData = createSelectSchema(users);
+
+// Schema for images
+export const images = sqliteTable(
+  "images",
+  {
+    id: int("id").primaryKey({ autoIncrement: true }),
+    filename: text("displayname").notNull(),
+    public: int("public").default(0).notNull(),
+    url: text("url").unique().notNull(),
+    created_at: int("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => {
+    return {
+      // Create an index for the url
+      url_idx: index("url_idx").on(table.url),
+    };
+  }
+);
+
+export const insertImageSchema = createInsertSchema(images);
+export const apiCreateImageSchema = insertImageSchema.omit({
+  id: true,
+  filename: true,
+  created_at: true,
+});

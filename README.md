@@ -86,3 +86,15 @@ b2 update-bucket --corsRules '[
       }
 ]' <bucket-name> allPublic
 ```
+
+## Accessing Private Buckets using Cloudfare
+
+> My approach is based on this official guide from Backblaze:
+> https://www.backblaze.com/docs/cloud-storage-deliver-private-backblaze-b2-content-through-cloudflare-cdn
+
+### Infrastructure
+
+- private Backblaze b2 bucket
+- Cloudfare worker: Authorizes reqeusts to the b2 bucket
+- 2nd cloudfare worker: updates the first one periodically
+- Cloudfare KV
