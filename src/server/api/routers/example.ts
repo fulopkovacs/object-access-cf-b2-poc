@@ -3,6 +3,7 @@ import { z } from "zod";
 import { apiInsertClickData, clicksPerPage, images } from "~/db/schema";
 import { env } from "~/env.mjs";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { writeToCloudfareKV } from "~/utils/lib/cf";
 import { getPreSignedUrl } from "~/utils/lib/s3";
 
 export const exampleRouter = createTRPCRouter({
@@ -57,6 +58,14 @@ export const exampleRouter = createTRPCRouter({
       const objectUrl = `${env.PRIVATE_BUCKET_PROXY}/file/${
         env.PRIVATE_BUCKET_NAME
       }/${encodeURIComponent(input.fileName)}`;
+
+      if (input.isPublic) {
+        // Update CF KV
+        await writeToCloudfareKV({
+          key: `/file/${env.PRIVATE_BUCKET_NAME}/${input.fileName}`,
+          value: "public",
+        });
+      }
 
       // Record data about the image in the database
       await ctx.db

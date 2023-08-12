@@ -112,6 +112,31 @@ async function main() {
     async function handleRequest(request) {
       let authToken='${bDownAuToken}'
       let b2Headers = new Headers(request.headers)
+
+      // is it public?
+      // (using namespace bindings)
+      const originalRequest = new URL(request.url)
+      const key = decodeURIComponent(originalRequest.pathname)
+      const visibility = await B2_PRIVATE_BUCKET.get(key)
+
+      if (visibility !== 'public') {
+        const data = {
+          errorMessage: "Image is private.",
+          key,
+          value: visibility,
+        };
+
+        const json = JSON.stringify(data, null, 2);
+
+        return new Response(json, {
+          headers: {
+            "content-type": "application/json;charset=UTF-8",
+          },
+          status: 401,
+          statusText: 'Unauthorized',
+        });
+      }
+
       b2Headers.append("Authorization", authToken)
       const modRequest = new Request(request.url, {
           method: request.method,

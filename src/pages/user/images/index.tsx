@@ -1,5 +1,5 @@
-import { Card, CardBody, CardHeader, Image } from "@nextui-org/react";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { Card, CardBody, Image } from "@nextui-org/react";
+import { EyeIcon, EyeOffIcon, ImageOffIcon } from "lucide-react";
 import prettyBytes from "pretty-bytes";
 import UserPageLayout from "~/components/UserPageLayout";
 import { api } from "~/utils/api";
@@ -21,14 +21,20 @@ function ImageCard({ imageData }: { imageData: ImageData }) {
         <CardBody className="flex  flex-row gap-3 py-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <div className="w-1/2">
-            <Image
-              removeWrapper
-              alt="Card background"
-              className="h-full rounded-xl object-cover"
-              src={imageData.url}
-              width={270}
-              height={200}
-            />
+            {imageData.public ? (
+              <Image
+                removeWrapper
+                alt="Card background"
+                className="h-full rounded-xl object-cover"
+                src={imageData.url}
+                width={270}
+                height={200}
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-neutral-400">
+                <EyeOffIcon />
+              </div>
+            )}
           </div>
           <div className="w-1/2">
             <h2>{imageData.filename}</h2>
@@ -67,6 +73,11 @@ export default function ImagesPage() {
           // <div key={image.id}>{image.filename}</div>
           <ImageCard key={image.id} imageData={image} />
         ))}
+        {getImages.data?.length === 0 && (
+          <p className="py-10 text-center text-neutral-400">
+            No images were found
+          </p>
+        )}
       </div>
     </UserPageLayout>
   );
