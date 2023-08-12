@@ -20,7 +20,6 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { api } from "~/utils/api";
 import prettyBytes from "pretty-bytes";
-import { BucketType } from "~/utils/bucketTypes";
 
 async function uploadFileToBucket({
   // fileName,
@@ -67,6 +66,8 @@ export default function UploadImagePage() {
   const [uploadRes, setUploadRes] = useState<string | undefined>();
   const [uploadError, setUploadError] = useState<Error | undefined>();
   const [uploadInProgress, setUploadInProgress] = useState<boolean>(false);
+
+  const utils = api.useContext();
 
   const [isPublic, setIsPublic] = useState<boolean>(true);
 
@@ -173,11 +174,13 @@ export default function UploadImagePage() {
           isDisabled={!!uploadRes || !image}
           startContent={<UploadIcon className="h-4 w-4" />}
           onClick={() => {
-            if (fileName && fileType)
+            if (fileName && fileType && image instanceof Blob)
               void generatePreSignedUrl.mutate(
                 {
                   isPublic: isPublic,
                   fileName,
+                  fileSize: image.size,
+                  fileType,
                 },
                 {
                   onError: (e) => {
@@ -191,7 +194,10 @@ export default function UploadImagePage() {
                         url: data.preSignedUrl,
                         fileContent: image,
                       })
-                        .then(() => setUploadRes("ok"))
+                        .then(async () => {
+                          await utils.example.getAllImages.invalidate();
+                          setUploadRes("ok");
+                        })
                         .catch((e: Error) => setUploadError(e))
                         .finally(() => setUploadInProgress(false));
                     } else {

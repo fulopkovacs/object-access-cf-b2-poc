@@ -1,5 +1,5 @@
-import { sql } from "drizzle-orm";
-import { sqliteTable, text, int, time, index } from "drizzle-orm/sqlite-core";
+import { getTableColumns, sql } from "drizzle-orm";
+import { sqliteTable, text, int, index } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 export const clicksPerPage = sqliteTable("clicks_per_page", {
@@ -41,8 +41,10 @@ export const images = sqliteTable(
   {
     id: int("id").primaryKey({ autoIncrement: true }),
     filename: text("displayname").notNull(),
-    public: int("public").default(0).notNull(),
+    public: int("public", { mode: "boolean" }).default(false).notNull(),
     url: text("url").unique().notNull(),
+    size: int("size").notNull(),
+    filetype: text("filetype").notNull(),
     created_at: int("created_at")
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),

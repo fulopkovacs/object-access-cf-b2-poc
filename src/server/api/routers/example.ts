@@ -33,11 +33,17 @@ export const exampleRouter = createTRPCRouter({
 
       return { insertedId: res?.insertedId };
     }),
+  getAllImages: publicProcedure.query(async ({ ctx }) => {
+    const imagesFromDb = await ctx.db.select().from(images).all();
+    return imagesFromDb;
+  }),
   generatePreSignedUrl: publicProcedure
     .input(
       z.object({
         fileName: z.string().min(1),
         isPublic: z.boolean(),
+        fileType: z.string().min(1),
+        fileSize: z.number(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -57,14 +63,16 @@ export const exampleRouter = createTRPCRouter({
         .insert(images)
         .values({
           filename: input.fileName,
-          public: input.isPublic ? 1 : 0,
+          public: input.isPublic,
           url: objectUrl,
+          filetype: input.fileType,
+          size: input.fileSize,
         })
         .onConflictDoUpdate({
           target: images.url,
           set: {
             filename: input.fileName,
-            public: input.isPublic ? 1 : 0,
+            public: input.isPublic,
           },
         })
         .all();
