@@ -1,5 +1,11 @@
 import { sql } from "drizzle-orm";
-import { sqliteTable, text, int, index } from "drizzle-orm/sqlite-core";
+import {
+  sqliteTable,
+  text,
+  int,
+  index,
+  primaryKey,
+} from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 export const clicksPerPage = sqliteTable("clicks_per_page", {
@@ -39,7 +45,8 @@ export const selectClickData = createSelectSchema(users);
 export const images = sqliteTable(
   "images",
   {
-    id: int("id").primaryKey({ autoIncrement: true }),
+    // id: int("id").primaryKey({ autoIncrement: true }),
+    id: text("id").primaryKey(),
     filename: text("displayname").notNull(),
     public: int("public", { mode: "boolean" }).default(false).notNull(),
     url: text("url").unique().notNull(),
@@ -63,7 +70,6 @@ export const images = sqliteTable(
 
 export const insertImageSchema = createInsertSchema(images);
 export const apiCreateImageSchema = insertImageSchema.omit({
-  id: true,
   filename: true,
   created_at: true,
 });

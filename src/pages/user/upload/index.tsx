@@ -132,7 +132,7 @@ export default function UploadImagePage() {
           <FileDataLabel>{fileType}</FileDataLabel>
         </motion.div>
         <Button
-          color={image ? "default" : "primary"}
+          color={image ? "default" : "success"}
           onClick={(e) => {
             e.preventDefault();
             filePickerInput.current?.click();

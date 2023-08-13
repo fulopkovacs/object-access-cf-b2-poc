@@ -13,10 +13,11 @@ import {
   writeToCloudfareKV as writeToCloudfareKVStore,
 } from "~/utils/lib/cf";
 import { getPreSignedUrl } from "~/utils/lib/s3";
+import { nanoid } from "nanoid";
 
 export type ImageDataWithAuthenticatedUrl = {
   authenticatedUrl: string | undefined;
-  id: number;
+  id: string;
   filename: string;
   public: boolean;
   url: string;
@@ -84,7 +85,7 @@ export const exampleRouter = createTRPCRouter({
 
       const idsToNewAuthenticatedUrls =
         imagesWithExpiredAuthenticatedUrls.reduce<
-          Map<number, string | undefined>
+          Map<string, string | undefined>
         >(
           (map, c, i) => map.set(c.id, newAuthenticatedUrls[i]?.preSignedUrl),
           new Map()
@@ -119,21 +120,22 @@ export const exampleRouter = createTRPCRouter({
       z.object({
         isPublic: z.boolean(),
         fileName: z.string().min(1),
-        imageId: z.number(),
+        imageId: z.string().min(1),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const key = getKeyInKVStore({ key: input.fileName });
       let operation: string;
 
       if (input.isPublic) {
         // make it public
-        const value = "public";
-        await writeToCloudfareKVStore({ key, value });
+        await writeToCloudfareKVStore({
+          key: input.imageId,
+          value: getKeyInKVStore({ key: input.imageId }),
+        });
         operation = "added";
       } else {
         // make it private
-        await deleteFromKVStore({ key });
+        await deleteFromKVStore({ key: input.imageId });
         operation = "deleted";
       }
 
@@ -143,7 +145,7 @@ export const exampleRouter = createTRPCRouter({
         .where(eq(images.id, input.imageId))
         .all();
 
-      return { key, operation };
+      return { key: input.imageId, operation };
     }),
   generatePreSignedUrl: publicProcedure
     .input(
@@ -155,8 +157,10 @@ export const exampleRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const key = nanoid();
+
       const { preSignedUrl } = await getPreSignedUrl({
-        key: input.fileName,
+        key,
         bucketName: env.PRIVATE_BUCKET_NAME,
         bucketRegion: env.PRIVATE_BUCKET_REGION,
         bucketEndpoint: env.PRIVATE_BUCKET_ENDPOINT,
@@ -164,22 +168,20 @@ export const exampleRouter = createTRPCRouter({
       });
 
       const { preSignedUrl: authenticatedUrl } = await getPreSignedUrl({
-        key: input.fileName,
+        key,
         bucketName: env.PRIVATE_BUCKET_NAME,
         bucketRegion: env.PRIVATE_BUCKET_REGION,
         bucketEndpoint: env.PRIVATE_BUCKET_ENDPOINT,
         commandType: "GET",
       });
 
-      const objectUrl = `${env.PRIVATE_BUCKET_PROXY}/file/${
-        env.PRIVATE_BUCKET_NAME
-      }/${encodeURIComponent(input.fileName)}`;
+      const objectUrl = `${env.PRIVATE_BUCKET_PROXY}/${key}`;
 
       if (input.isPublic) {
         // Update CF KV
         await writeToCloudfareKVStore({
-          key: getKeyInKVStore({ key: input.fileName }),
-          value: "public",
+          key: key,
+          value: getKeyInKVStore({ key }),
         });
       }
 
@@ -190,6 +192,7 @@ export const exampleRouter = createTRPCRouter({
       await ctx.db
         .insert(images)
         .values({
+          id: key,
           filename: input.fileName,
           public: input.isPublic,
           url: objectUrl,

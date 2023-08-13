@@ -13,7 +13,7 @@ import UserPageLayout from "~/components/UserPageLayout";
 import { api } from "~/utils/api";
 import { useTimer } from "react-timer-hook";
 import { AnimatePresence, motion } from "framer-motion";
-import { ImageDataWithAuthenticatedUrl } from "~/server/api/routers/example";
+import { type ImageDataWithAuthenticatedUrl } from "~/server/api/routers/example";
 
 type ImageDataProps = { imageData: ImageDataWithAuthenticatedUrl };
 

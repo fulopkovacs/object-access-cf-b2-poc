@@ -115,15 +115,14 @@ async function main() {
 
       // is it public?
       // (using namespace bindings)
-      const originalRequest = new URL(request.url)
-      const key = decodeURIComponent(originalRequest.pathname)
-      const visibility = await B2_PRIVATE_BUCKET.get(key)
+      const requestUrl = new URL(request.url)
+      const key = requestUrl.pathname.length > 0 ? requestUrl.pathname.slice(1) : key
+      const pathToObjectInB2Bucket = await B2_PRIVATE_BUCKET.get(key)
 
-      if (visibility !== 'public') {
+      if (!pathToObjectInB2Bucket) {
         const data = {
           errorMessage: "Image is private.",
           key,
-          value: visibility,
         };
 
         const json = JSON.stringify(data, null, 2);
@@ -137,8 +136,10 @@ async function main() {
         });
       }
 
+      requestUrl.pathname = pathToObjectInB2Bucket
+
       b2Headers.append("Authorization", authToken)
-      const modRequest = new Request(request.url, {
+      const modRequest = new Request(requestUrl.href, {
           method: request.method,
           headers: b2Headers
       })

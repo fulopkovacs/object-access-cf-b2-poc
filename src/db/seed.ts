@@ -2,7 +2,7 @@ import { db } from "~/server/db";
 import {
   type apiCreateUserSchema,
   users,
-  apiInsertClickData,
+  type apiInsertClickData,
   clicksPerPage,
 } from "./schema";
 import { type z } from "zod";
@@ -22,7 +22,6 @@ async function seed() {
 
   const basePathClickData: z.infer<typeof apiInsertClickData> = {
     pathname: "/",
-    numberOfClicks: 10,
   };
 
   await db
