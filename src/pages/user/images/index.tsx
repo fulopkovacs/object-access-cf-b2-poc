@@ -119,7 +119,7 @@ function ImageCard({ imageData }: ImageDataProps) {
           <Image
             removeWrapper
             alt="Card background"
-            className="h-40 w-full rounded-xl object-cover object-almost-top md:h-full md:w-auto"
+            className="h-40 w-full rounded-xl object-cover object-almost-top md:h-full md:w-full"
             src={imageData.authenticatedUrl ?? imageData.url}
             width={270}
             height={200}
