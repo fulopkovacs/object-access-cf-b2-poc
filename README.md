@@ -1,4 +1,4 @@
-# POC: Control the access to objects stored in Backblaze b2 buckets using Cloudfare Workers, KV and CDN
+# [Draft] POC: Control the access to objects stored in Backblaze b2 buckets using Cloudfare Workers, KV and CDN
 
 ## Use case
 
@@ -8,6 +8,7 @@ This proof of concept repo covers the following use case:
 - your users users want to be able to make images public/private
 
 ## Solution
+
 ![diagram](https://github.com/fulopkovacs/virtual-sketchbook/assets/43729152/9cfee125-a2e7-44b3-80ea-2604ef2ea9db)
 
 - In this POC we use a proxy domain (eg.: `static.fyicli.com`) to access the images stored in the private Backblaze b2 bucket.
