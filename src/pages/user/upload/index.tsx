@@ -33,14 +33,7 @@ async function uploadFileToBucket({
     // TODO: send `PUT` request
     const res = await fetch(decodeURIComponent(url), {
       method: "PUT",
-      // body: "it works from the browser",
-      /* headers: {
-        "Content-Type": "text/plain",
-      }, */
       body: fileContent,
-      /* headers: {
-        "Content-Type": contentType,
-      }, */
     });
     console.log(res);
     // return res;
@@ -239,18 +232,6 @@ export default function UploadImagePage() {
           </AnimatePresence>
         )}
       </div>
-      {/* <Accordion>
-      <AccordionItem
-      key="1"
-      title="Details"
-      isDisabled={!!generatePreSignedUrl.data?.preSignedUrl}
-      >
-      <p key="1">{generatePreSignedUrl.data?.preSignedUrl}</p>
-      <p className="text-red-400">{generatePreSignedUrl.error?.message}</p>
-      <p>{uploadRes}</p>
-      <p className="text-red-400">{uploadError?.message}</p>
-      </AccordionItem>
-      </Accordion> */}
     </UserPageLayout>
   );
 }
