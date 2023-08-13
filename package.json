@@ -1,5 +1,5 @@
 {
-  "name": "03-virtual-sketchbook",
+  "name": "control-image-access-poc",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -11,7 +11,8 @@
     "db.local.seed": "NODE_ENV=development dotenv -e .env -- tsx ./src/db/seed.ts",
     "db.local.push": "NODE_ENV=development dotenv -e .env -- drizzle-kit push:sqlite",
     "db.local.generate": "NODE_ENV=development dotenv -e .env -- drizzle-kit generate:sqlite",
-    "db.local.migrate": "NODE_ENV=development dotenv -e .env --  tsx ./src/db/migrate.ts"
+    "db.local.migrate": "NODE_ENV=development dotenv -e .env --  tsx ./src/db/migrate.ts",
+    "update-worker": "NODE_ENV=development dotenv -e .env -- tsx src/utils/b2-authorize-cf-worker.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.32.0",
