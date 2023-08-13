@@ -15,11 +15,11 @@ https://www.backblaze.com/docs/cloud-storage-deliver-private-backblaze-b2-conten
 */
 
 // TODO: run this with a CRON job
-// (another worker with CRON Trigger on Cloudfare??)
+// (another worker with CRON Trigger on Cloudflare??)
 
 import { env } from "~/env.mjs";
 
-/** Name of the Cloudfare worker */
+/** Name of the Cloudflare worker */
 const cfWorkerName = "fetch-from-private-b2-bucket";
 
 /**

@@ -10,7 +10,7 @@ import {
 import { AUTHENTICATED_URL_EXPIRY } from "~/utils/constants";
 import {
   deleteFromKVStore,
-  writeToCloudfareKV as writeToCloudfareKVStore,
+  writeToCloudflareKV as writeToCloudflareKVStore,
 } from "~/utils/lib/cf";
 import { getPreSignedUrl } from "~/utils/lib/s3";
 import { nanoid } from "nanoid";
@@ -128,7 +128,7 @@ export const exampleRouter = createTRPCRouter({
 
       if (input.isPublic) {
         // make it public
-        await writeToCloudfareKVStore({
+        await writeToCloudflareKVStore({
           key: input.imageId,
           value: getKeyInKVStore({ key: input.imageId }),
         });
@@ -179,7 +179,7 @@ export const exampleRouter = createTRPCRouter({
 
       if (input.isPublic) {
         // Update CF KV
-        await writeToCloudfareKVStore({
+        await writeToCloudflareKVStore({
           key: key,
           value: getKeyInKVStore({ key }),
         });

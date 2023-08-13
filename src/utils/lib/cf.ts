@@ -1,10 +1,10 @@
 /**
-  Utilities related to Cloudfare API-s.
+  Utilities related to Cloudflare API-s.
 */
 
 import { env } from "~/env.mjs";
 
-export async function writeToCloudfareKV({
+export async function writeToCloudflareKV({
   key,
   value,
 }: {
@@ -34,7 +34,7 @@ export async function writeToCloudfareKV({
     const respJson = (await resp.json()) as unknown;
     console.log(respJson);
     console.error(
-      `[writeToCloudfareKV] Failed with status code ${resp.status}`
+      `[writeToCloudflareKV] Failed with status code ${resp.status}`
     );
     throw new Error(`Failed to update key "${key}" with value "${value}"!`);
   }
