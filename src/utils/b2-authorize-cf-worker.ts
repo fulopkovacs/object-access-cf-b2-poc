@@ -105,47 +105,77 @@ async function main() {
 
   // Replace the worker's source code
   const workerCode = `
-    addEventListener('fetch', event => {
-      event.respondWith(handleRequest(event.request))
-    })
+addEventListener('fetch', event => {
+  event.respondWith(handleRequest(event, event.request))
+})
 
-    async function handleRequest(request) {
-      let authToken='${bDownAuToken}'
-      let b2Headers = new Headers(request.headers)
+async function handleRequest(event, request) {
+  let authToken='${bDownAuToken}'
+  let b2Headers = new Headers(request.headers)
 
-      // is it public?
-      // (using namespace bindings)
-      const requestUrl = new URL(request.url)
-      const key = requestUrl.pathname.length > 0 ? requestUrl.pathname.slice(1) : key
-      const pathToObjectInB2Bucket = await B2_PRIVATE_BUCKET.get(key)
+  // is it public?
+  // (using namespace bindings)
+  const requestUrl = new URL(request.url)
+  const key = requestUrl.pathname.length > 0 ? requestUrl.pathname.slice(1) : requestUrl.pathname
+  const pathToObjectInB2Bucket = await B2_PRIVATE_BUCKET.get(key)
 
-      if (!pathToObjectInB2Bucket) {
-        const data = {
-          errorMessage: "Image is private.",
-          key,
-        };
+  if (!pathToObjectInB2Bucket) {
+    const data = {
+      errorMessage: "Image is private.",
+      key,
+    };
 
-        const json = JSON.stringify(data, null, 2);
+    const json = JSON.stringify(data, null, 2);
 
-        return new Response(json, {
-          headers: {
-            "content-type": "application/json;charset=UTF-8",
-          },
-          status: 401,
-          statusText: 'Unauthorized',
-        });
-      }
+    return new Response(json, {
+      headers: {
+        "content-type": "application/json;charset=UTF-8",
+      },
+      status: 401,
+      statusText: 'Unauthorized',
+    });
+  }
 
-      requestUrl.pathname = pathToObjectInB2Bucket
+  // We have to use the Cache API, because by default:
+  // "If the Request to your origin includes an Authorization header, its response will be also BYPASS."
+  // https://developers.cloudflare.com/cache/concepts/default-cache-behavior/#cloudflare-cache-responses
 
-      b2Headers.append("Authorization", authToken)
-      const modRequest = new Request(requestUrl.href, {
-          method: request.method,
-          headers: b2Headers
-      })
-      const response = await fetch(modRequest)
-      return response
-    }`;
+  const cache = caches.default
+  const cached = await cache.match(request)
+  if (cached) {
+    return cached
+  }
+
+  requestUrl.pathname = pathToObjectInB2Bucket
+
+  b2Headers.append("Authorization", authToken)
+  const modRequest = new Request(requestUrl.href, {
+      method: request.method,
+      headers: b2Headers
+  })
+
+  let response = await fetch(modRequest)
+
+  if (response.status >=300) {
+    return response;
+  }
+
+  // Reconstruct the Response object to make its headers mutable.
+  response = new Response(response.body, response);
+
+  // Set cache control headers to cache on browser for 1 day
+  // (Public images will get reponses with 304 status codes if they
+  // are cached, private images will return the 401 status codes,
+  // that we specified earlier in the code.)
+  response.headers.set('Cache-Control', 'max-age=86400');
+
+  // There might be an issue about caching files over 150 MB:
+  // https://community.cloudflare.com/t/authorization-header-causes-cf-cache-status-bypass-regardless-of-cacheeverything/249692/18
+  event.waitUntil(cache.put(request, response.clone()))
+
+  return response
+}
+`;
 
   const cfHeaders = new Headers();
   cfHeaders.append("Authorization", "Bearer " + env.CLOUDFARE_API_TOKEN);
