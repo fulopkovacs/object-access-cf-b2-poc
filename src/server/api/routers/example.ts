@@ -67,9 +67,9 @@ export const exampleRouter = createTRPCRouter({
       const currentTimestamp = Date.now() - 5 * 60 * 1000;
       const expiryTimestamp = Date.now() + AUTHENTICATED_URL_EXPIRY * 1000;
 
-      const imagesWithExpiredAuthenticatedUrls = imagesFromDb.filter((d) => {
-        d.authenticated_url_expiry_timestamp > currentTimestamp;
-      });
+      const imagesWithExpiredAuthenticatedUrls = imagesFromDb.filter(
+        (d) => d.authenticated_url_expiry_timestamp <= currentTimestamp
+      );
 
       const newAuthenticatedUrls = await Promise.all(
         imagesWithExpiredAuthenticatedUrls.map((image) =>
