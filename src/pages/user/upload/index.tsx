@@ -7,7 +7,7 @@ import {
   useEffect,
 } from "react";
 import UserPageLayout from "~/components/UserPageLayout";
-import { Button, Code, Switch } from "@nextui-org/react";
+import { Button, Card, CardBody, Code, Switch } from "@nextui-org/react";
 import {
   CopyIcon,
   EyeIcon,
@@ -229,6 +229,20 @@ export default function UploadImagePage() {
                 <CopyIcon className="h-3 w-3" />
               </Button>
             </motion.div>
+            {uploadError && (
+              <motion.div
+                key="upload-error-message"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <Card>
+                  <CardBody>
+                    <p className="text-danger">{uploadError.message}</p>
+                  </CardBody>
+                </Card>
+              </motion.div>
+            )}
           </AnimatePresence>
         )}
       </div>
