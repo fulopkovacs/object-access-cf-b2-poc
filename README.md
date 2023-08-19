@@ -2,6 +2,10 @@
 
 https://github.com/fulopkovacs/virtual-sketchbook/assets/43729152/9d2873a1-5f28-48c4-8137-d315d90fb24d
 
+> **⚠️ Warnings**
+> This approach can be expensive on scale, since a CloudFlare worker is executed for every single public image.
+> I ultimately decided on finding another solution.
+
 ## Use case
 
 This proof of concept repo covers the following use case:
