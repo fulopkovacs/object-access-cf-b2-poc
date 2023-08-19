@@ -6,6 +6,10 @@ await import("./src/env.mjs");
 
 /** @type {import("next").NextConfig} */
 const config = {
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async redirects() {
+    return [{ source: "/", destination: "/user/upload", permanent: true }];
+  },
   reactStrictMode: true,
 
   /**
