@@ -15,6 +15,9 @@ This proof of concept repo covers the following use case:
 
 ## Solution
 
+![infra](https://github.com/fulopkovacs/object-access-cf-b2-poc/assets/43729152/441093de-659f-4b80-8be6-147d786aaa60)
+
+
 - In this POC we use a proxy domain (eg.: `static.fyicli.com`) to access the images stored in the private Backblaze b2 bucket.
 - All requests to the proxy domain are processed by a Cloudfare worker that tries to get the path to the requested object in the private bucket from a Cloudfare KV Store.
   - if the path is found: the worker modifies the request to include an Authorization token + go to the correct path
